@@ -1,0 +1,32 @@
+{
+    "servers": [
+        {
+            "name": "RideHailingServer",
+            "group": "RideHailingServer",
+            "applications": [
+                "com.dcaiti.mosaic.app.ridehailing.simple.SimpleRideHailingServiceApp"
+            ]
+        }
+    ],
+    "prototypes": [
+        {
+            "name": "Taxi",
+            "applications": [
+                "com.dcaiti.mosaic.app.ridehailing.MultiStopApp",
+                "com.dcaiti.mosaic.app.ridehailing.simple.SimpleRideHailingVehicleApp"
+            ]
+        }
+    ],
+    "vehicles": [
+        {
+            "startingTime": 1.0,
+            "route": "0",
+            "pos": 10,
+            "flow": 3600,
+            "maxNumberVehicles": 2,
+            "types": [
+                { "name": "Taxi" }
+            ]
+        }
+    ]
+}

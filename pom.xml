@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--parent>
+        <artifactId>mosaic-parent</artifactId>
+        <groupId>org.eclipse.mosaic</groupId>
+        <version>25.0-SNAPSHOT</version>
+        <relativePath>../eclipse-mosaic/pom.xml</relativePath>
+    </parent-->
+
+    <groupId>com.dcaiti.mosaic.app</groupId>
+    <artifactId>ride-hailing</artifactId>
+    <version>25.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <name>Ride-Hailing applications</name>
+    <description>
+        Application framework with implementation of simple Ride-Hailing-Service
+    </description>
+
+    <properties>
+        <mosaic.version>25.0-SNAPSHOT</mosaic.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <version.logback>1.3.8</version.logback><!-- 1.3.8 is approved in #9459 -->
+        <version.commons-csv>1.4</version.commons-csv>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.eclipse.mosaic</groupId>
+            <artifactId>mosaic-application</artifactId>
+            <version>${mosaic.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.mosaic</groupId>
+            <artifactId>mosaic-mapping</artifactId>
+            <version>${mosaic.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${version.logback}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-csv</artifactId>
+            <version>${version.commons-csv}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.mosaic</groupId>
+            <artifactId>mosaic-application</artifactId>
+            <version>${mosaic.version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.mosaic</groupId>
+            <artifactId>mosaic-utils</artifactId>
+            <version>${mosaic.version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.mosaic</groupId>
+            <artifactId>mosaic-rti-api</artifactId>
+            <version>25.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+</project>
+
