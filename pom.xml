@@ -3,13 +3,6 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <!--parent>
-        <artifactId>mosaic-parent</artifactId>
-        <groupId>org.eclipse.mosaic</groupId>
-        <version>25.0-SNAPSHOT</version>
-        <relativePath>../eclipse-mosaic/pom.xml</relativePath>
-    </parent-->
-
     <groupId>com.dcaiti.mosaic.app</groupId>
     <artifactId>ride-hailing</artifactId>
     <version>25.0-SNAPSHOT</version>
@@ -48,25 +41,6 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-csv</artifactId>
             <version>${version.commons-csv}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.mosaic</groupId>
-            <artifactId>mosaic-application</artifactId>
-            <version>${mosaic.version}</version>
-            <type>test-jar</type>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.mosaic</groupId>
-            <artifactId>mosaic-utils</artifactId>
-            <version>${mosaic.version}</version>
-            <type>test-jar</type>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.mosaic</groupId>
-            <artifactId>mosaic-rti-api</artifactId>
-            <version>25.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
 </project>
