@@ -1,0 +1,103 @@
+{
+    "rideOrders": [
+        {
+            "time": "15s",
+            "start": {
+                "latitude": 52.523202,
+                "longitude": 13.313160
+            },
+            "target": {
+                "latitude": 52.511477,
+                "longitude": 13.304080
+            }
+        },
+        {
+            "time": "45s",
+            "start": {
+                "latitude": 52.5261092048501,
+                "longitude": 13.355918626419392
+            },
+            "target": {
+                "latitude": 52.52632817198125,
+                "longitude": 13.344393596323957
+            }
+        },
+        {
+            "time": "90s",
+            "start": {
+                "latitude": 52.49135547831571,
+                "longitude": 13.326658692982516
+            },
+            "target": {
+                "latitude": 52.48749041995852,
+                "longitude": 13.326569891227859
+            }
+        },
+        {
+            "time": "120s",
+            "start": {
+                "latitude": 52.523051558930156,
+                "longitude": 13.314410559692137
+            },
+            "target": {
+                "latitude": 52.49371643604678,
+                "longitude": 13.33348614803539
+            }
+        },
+        {
+            "time": "180s",
+            "start": {
+                "latitude": 52.50453616960276,
+                "longitude": 13.313675828311208
+            },
+            "target": {
+                "latitude": 52.52429985273951,
+                "longitude": 13.327736093006685
+            }
+        },
+        {
+            "time": "210s",
+            "start": {
+                "latitude": 52.52714285659437,
+                "longitude": 13.34317977788747
+            },
+            "target": {
+                "latitude": 52.489226585604555,
+                "longitude": 13.344897381748705
+            }
+        },
+        {
+            "time": "240s",
+            "start": {
+                "latitude": 52.48886694773292,
+                "longitude": 13.331039387786891
+            },
+            "target": {
+                "latitude": 52.49716832343792,
+                "longitude": 13.324228918183367
+            }
+        },
+        {
+            "time": "300s",
+            "start": {
+                "latitude": 52.51759220431327,
+                "longitude": 13.324776858374797
+            },
+            "target": {
+                "latitude": 52.49800762948079,
+                "longitude": 13.324419889876678
+            }
+        },
+        {
+            "time": "350s",
+            "start": {
+                "latitude": 52.49805915544521,
+                "longitude": 13.33494024841123
+            },
+            "target": {
+                "latitude": 52.487389263550966,
+                "longitude": 13.330787146445097
+            }
+        }
+    ]
+}
