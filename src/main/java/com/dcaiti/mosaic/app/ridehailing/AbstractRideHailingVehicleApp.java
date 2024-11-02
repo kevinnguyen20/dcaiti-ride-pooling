@@ -122,6 +122,7 @@ public abstract class AbstractRideHailingVehicleApp<ConfigT extends CAbstractRid
             Ride ride = rideBookingMessage.getRideBooking();
             MultiStopApp multiStopApp = getMultistopApp();
 
+            // For ride-pooling: check vehicle capacity (multiple rider possible)
             if (currentRide != null) {
                 getLog().error("Cannot accept multiple ride bookings.");
                 return;

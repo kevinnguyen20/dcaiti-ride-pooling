@@ -26,6 +26,7 @@ public abstract class AbstractRideHailingServiceApp<ConfigT>
 
     private static final long UPDATE_INTERVAL = 5 * TIME.SECOND;
 
+    // Mapping rideId:ride
     protected final Map<Integer, Ride> rides = new HashMap<>();
     protected final Map<String, VehicleStatus> registeredVehicles = new HashMap<>();
 
@@ -59,11 +60,15 @@ public abstract class AbstractRideHailingServiceApp<ConfigT>
         rideProvider.findNewRides(getOs().getSimulationTime())
                 .forEach(booking -> rides.put(booking.getBookingId(), booking));
 
+        // Mapping taxiId:ride
         final Map<String, Ride> assignedBookings = new HashMap<>();
         rides.values().stream().sorted(Comparator.comparingLong(Ride::getCreationTime)).forEach(booking -> {
             if (booking.getStatus() != Ride.Status.PENDING) {
                 return;
             }
+
+            // Better idea: first check if booking is already assigned to taxi
+
             String taxiId = chooseTaxi(booking);
             if (taxiId == null) {
                 return;
@@ -150,4 +155,3 @@ public abstract class AbstractRideHailingServiceApp<ConfigT>
     public void onMessageTransmitted(V2xMessageTransmission v2xMessageTransmission) {
     }
 }
-

@@ -10,6 +10,7 @@ public class VehicleStatus implements Serializable {
 
     private final String vehicleId;
     private final GeoPoint currentPosition;
+    // For ride-pooling: list of rides, probably List<Ride>
     private final Ride currentRide;
     private final double totalDistanceDriven;
 

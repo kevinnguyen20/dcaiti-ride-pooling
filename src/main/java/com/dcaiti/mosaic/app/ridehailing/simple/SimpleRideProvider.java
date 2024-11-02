@@ -18,6 +18,8 @@ public class SimpleRideProvider implements RideProvider {
         this.rideOrders.addAll(rideOrders);
     }
 
+    // Predefined ride orders in a file
+    // A better solution would be converting ride orders into a data stream
     @Override
     public List<Ride> findNewRides(long timestamp) {
         final List<Ride> nextRides = new ArrayList<>();
