@@ -27,6 +27,7 @@ public abstract class AbstractRideHailingVehicleApp<ConfigT extends CAbstractRid
 
     private static final long UPDATE_INTERVAL = 5 * TIME.SECOND;
 
+    // TODO: for ride-pooling should be list of rides
     protected Ride currentRide = null;
 
     public AbstractRideHailingVehicleApp(Class<ConfigT> configClass) {
@@ -74,6 +75,7 @@ public abstract class AbstractRideHailingVehicleApp<ConfigT extends CAbstractRid
                 return;
             }
 
+            // Another vehicle's ride
             int rideId = rideStop.getRideStop().getRideId();
             if (rideId != currentRide.getBookingId()) {
                 return;

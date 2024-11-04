@@ -11,6 +11,8 @@ public class SimpleRideHailingServiceApp extends AbstractRideHailingServiceApp<C
         super(CSimpleRideHailingServiceApp.class);
     }
 
+    // Predefined ride orders in a file
+    // A better solution would be converting ride orders into a data stream
     @Override
     protected RideProvider createRideBookingProvider() {
         return new SimpleRideProvider(getConfiguration().rideOrders);

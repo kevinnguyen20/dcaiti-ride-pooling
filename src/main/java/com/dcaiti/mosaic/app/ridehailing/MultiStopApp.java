@@ -46,9 +46,11 @@ public class MultiStopApp
 
     private final List<VehicleStop> upcomingStops = new ArrayList<>();
 
+    // TODO: for ride-pooling should be list of VehicleStops
     private VehicleStop currentPlannedStop = null;
     private boolean waitingForResume = false;
     private boolean initialStep = true;
+    // Business point for idle vehicles, functionality not implemented yet
     private boolean driveToFirstStop = true;
     private String expectedRoute = null;
     private long lastStoppedAt;
@@ -124,6 +126,7 @@ public class MultiStopApp
     private boolean isNotReachable(IRoadPosition from, IRoadPosition to) {
         final RoutingPosition routingStart = new RoutingPosition(centerOf(from.getConnection()), null, from.getConnection().getId());
         final RoutingPosition routingTarget = new RoutingPosition(centerOf(to.getConnection()), null, to.getConnection().getId());
+        // Routing with simulation kernel
         return SimulationKernel.SimulationKernel.getCentralNavigationComponent().getRouting()
                 .findRoutes(new RoutingRequest(routingStart, routingTarget)).getBestRoute() == null;
     }
@@ -132,12 +135,15 @@ public class MultiStopApp
         return GeoUtils.getPointBetween(connection.getStartNode().getPosition(), connection.getEndNode().getPosition());
     }
 
+    // Called after each simulation step
     @Override
     public void onVehicleUpdated(@Nullable VehicleData previousVehicleData, @Nonnull VehicleData updatedVehicleData) {
+        // Log time for first time waiting
         if ((previousVehicleData != null && !previousVehicleData.isStopped()) && updatedVehicleData.isStopped()) {
             lastStoppedAt = getOs().getSimulationTime();
         }
 
+        // If already waiting, then continue waiting
         if (waitingForResume) {
             return;
         }
@@ -147,6 +153,7 @@ public class MultiStopApp
             driveToFirstStop = true;
         }
 
+        // Create a stop 100m away from spawnpoint (only once)
         if (initialStep) {
             VehicleRoute currentRoute = getOs().getNavigationModule().getCurrentRoute();
             IRoadPosition currentRoadPosition = getOs().getNavigationModule().getRoadPosition();
@@ -155,11 +162,13 @@ public class MultiStopApp
             initialStep = false;
         }
 
+        // Vehicle on the way to first stop but new order arrives
         if (driveToFirstStop && !upcomingStops.isEmpty()) {
             driveToNextStop();
             driveToFirstStop = false;
         }
 
+        // Vehicle reached stop
         if (hasReachedStop(currentPlannedStop)) {
             if (upcomingStops.remove(currentPlannedStop)) {
                 notifyOtherApps(currentPlannedStop);
@@ -208,10 +217,12 @@ public class MultiStopApp
                 .costFunction(RoutingCostFunction.Fastest)
                 .considerTurnCosts(getConfiguration().considerTurnCosts);
 
+        // Routing with vehicle's OS
         final RoutingResponse routingResponse = getOs().getNavigationModule().calculateRoutes(routingTarget, routingParameters);
         final CandidateRoute bestRoute = routingResponse.getBestRoute();
         if (bestRoute != null) {
             routeCalculationTries = 0;
+            // Bug??
             if (!isRoadPositionOnRoute(nextTarget.getPositionOnRoad(), bestRoute.getConnectionIds())
                     || isBehindConnectionOfTargetStop(nextTarget)) {
                 nextTarget.setPositionOnRoad(RoadPositionFactory.createAtEndOfRoute(bestRoute.getConnectionIds(), 0));
@@ -243,6 +254,7 @@ public class MultiStopApp
 
     }
 
+    // Same road but vehicle stops behind target
     private boolean isBehindConnectionOfTargetStop(VehicleStop nextTarget) {
         return nextTarget.getPositionOnRoad().getConnectionId().equals(getOs().getRoadPosition().getConnectionId())
                 && getOs().getRoadPosition().getOffset() > nextTarget.getPositionOnRoad().getOffset();

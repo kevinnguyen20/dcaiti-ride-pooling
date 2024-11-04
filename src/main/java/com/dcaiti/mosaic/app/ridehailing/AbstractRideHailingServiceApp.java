@@ -28,6 +28,7 @@ public abstract class AbstractRideHailingServiceApp<ConfigT>
 
     // Mapping rideId:ride
     protected final Map<Integer, Ride> rides = new HashMap<>();
+    // Mapping vehicleId:vehicleStatus
     protected final Map<String, VehicleStatus> registeredVehicles = new HashMap<>();
 
     private RideProvider rideProvider;
@@ -57,6 +58,9 @@ public abstract class AbstractRideHailingServiceApp<ConfigT>
         if (isTornDown()) {
             return;
         }
+
+        // All ride order are read at once but some orders cannot yet be
+        // assigned as their "start" time is ahead the current timestamp
         rideProvider.findNewRides(getOs().getSimulationTime())
                 .forEach(booking -> rides.put(booking.getBookingId(), booking));
 
@@ -106,6 +110,8 @@ public abstract class AbstractRideHailingServiceApp<ConfigT>
             }
 
             Ride storedRide = rides.get(taxiRide.getBookingId());
+            // Compare message from taxi vs. assigned vehicle for ride on
+            // dispatcher side
             if (!taxiStatusMsg.getVehicleId().equals(storedRide.getAssignedVehicleId())) {
                 return;
             }
@@ -120,11 +126,14 @@ public abstract class AbstractRideHailingServiceApp<ConfigT>
                 storedRide.setStatus(taxiRide.getStatus());
             }
 
+            // First time taxi sends updated status of ride, update status of
+            // stored ride
             if (taxiRide.getStatus() == Ride.Status.PICKED_UP && storedRide.getPickupTime() == 0) {
                 storedRide.setPickupTime(getOs().getSimulationTime());
                 onVehicleRidePickup(storedRide);
             }
 
+            // Same here but just for drop off
             if (taxiRide.getStatus() == Ride.Status.DROPPED_OFF && storedRide.getDropOffTime() == 0) {
                 storedRide.setDropOffTime(getOs().getSimulationTime());
                 onVehicleRideDropoff(storedRide);
