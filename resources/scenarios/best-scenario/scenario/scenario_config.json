@@ -28,6 +28,6 @@
         "cell": true,
         "sns": false,
         "sumo": true,    
-        "output": false
+        "output": true
     }
 }
