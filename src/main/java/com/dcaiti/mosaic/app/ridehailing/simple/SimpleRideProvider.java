@@ -1,5 +1,6 @@
 package com.dcaiti.mosaic.app.ridehailing.simple;
 
+import com.dcaiti.mosaic.app.ridehailing.ridepooling.CRidePoolingServiceApp;
 import com.dcaiti.mosaic.app.ridehailing.server.Ride;
 import com.dcaiti.mosaic.app.ridehailing.server.RideProvider;
 
@@ -12,22 +13,20 @@ public class SimpleRideProvider implements RideProvider {
 
     private int nextId = 0;
 
-    private final PriorityQueue<CSimpleRideHailingServiceApp.CRideOrder> rideOrders = new PriorityQueue<>(Comparator.comparingLong(a -> a.time));
+    private final PriorityQueue<CRidePoolingServiceApp.CRideOrder> rideOrders = new PriorityQueue<>(Comparator.comparingLong(a -> a.orderTime));
 
-    public SimpleRideProvider(List<CSimpleRideHailingServiceApp.CRideOrder> rideOrders) {
+    public SimpleRideProvider(List<CRidePoolingServiceApp.CRideOrder> rideOrders) {
         this.rideOrders.addAll(rideOrders);
     }
 
-    // Predefined ride orders in a file
-    // A better solution would be converting ride orders into a data stream
+    // TODO: Run the simulation and the passenger model separately
     @Override
     public List<Ride> findNewRides(long timestamp) {
         final List<Ride> nextRides = new ArrayList<>();
-        while (!rideOrders.isEmpty() && rideOrders.peek().time < timestamp) {
-            CSimpleRideHailingServiceApp.CRideOrder rideOrder = rideOrders.poll();
-
-            Ride ride = new Ride(nextId++, rideOrder.start, rideOrder.target, false);
-            ride.setCreationTime(rideOrder.time);
+        while (!rideOrders.isEmpty() && rideOrders.peek().orderTime < timestamp) {
+            CRidePoolingServiceApp.CRideOrder rideOrder = rideOrders.poll();
+            Ride ride = new Ride(nextId++, rideOrder.pickup, rideOrder.dropoff, false);
+            ride.setCreationTime(rideOrder.orderTime);
             ride.setStatus(Ride.Status.PENDING);
             nextRides.add(ride);
         }
