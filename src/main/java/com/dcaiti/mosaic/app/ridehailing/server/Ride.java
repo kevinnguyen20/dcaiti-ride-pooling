@@ -13,7 +13,7 @@ public class Ride implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public enum Status {
-        PENDING, ASSIGNED, PICKED_UP, DROPPED_OFF, DECLINED
+        PENDING, ASSIGNED, PICKED_UP, DROPPED_OFF, DECLINED, REJECTED
     }
 
     private final int bookingId;
