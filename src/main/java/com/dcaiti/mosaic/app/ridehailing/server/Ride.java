@@ -28,12 +28,13 @@ public class Ride implements Serializable {
     private long creationTime;
     private long pickupTime;
     private long dropOffTime;
+    private long maxDetourTime;
 
     private int numberOfRejections;
 
     public Ride(Ride ride) {
         this.bookingId = ride.bookingId;
-        this.status = Status.PENDING;
+        this.status = ride.status;
         this.isFinalBooking = ride.isFinalBooking;
 
         this.pickupLocation = new VehicleStop(bookingId, ride.pickupLocation.getGeoPoint(), VehicleStop.StopReason.PICK_UP);
@@ -49,6 +50,7 @@ public class Ride implements Serializable {
         this.isFinalBooking = isFinalBooking;
         this.pickupLocation = new VehicleStop(bookingId, pickupLocation, VehicleStop.StopReason.PICK_UP);
         this.dropoffLocation = new VehicleStop(bookingId, dropoffLocation, VehicleStop.StopReason.DROP_OFF);
+        this.maxDetourTime = Long.MAX_VALUE;
     }
 
     public int getBookingId() {
@@ -63,24 +65,16 @@ public class Ride implements Serializable {
         return dropoffLocation;
     }
 
-    public Status getStatus() {
-        return status;
-    }
-
     public boolean isFinalBooking() {
         return isFinalBooking;
     }
 
-    public void setStatus(Status status) {
-        this.status = status;
+    public Status getStatus() {
+        return status;
     }
 
     public String getAssignedVehicleId() {
         return assignedVehicleId;
-    }
-
-    public void setAssignedVehicleId(String assignedVehicleId) {
-        this.assignedVehicleId = assignedVehicleId;
     }
 
     public long getCreationTime() {
@@ -95,6 +89,22 @@ public class Ride implements Serializable {
         return dropOffTime;
     }
 
+    public long getmaxDetourTime() {
+        return maxDetourTime;
+    }
+
+    public int getNumberOfRejections() {
+        return numberOfRejections;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
+    }
+
+    public void setAssignedVehicleId(String assignedVehicleId) {
+        this.assignedVehicleId = assignedVehicleId;
+    }
+
     public void setCreationTime(long creationTime) {
         this.creationTime = creationTime;
     }
@@ -107,12 +117,12 @@ public class Ride implements Serializable {
         this.dropOffTime = dropOffTime;
     }
 
-    public void incrementNumberOfRejections() {
-        numberOfRejections++;
+    public void setMaxDetourTime(long maxDetourTime) {
+        this.maxDetourTime = maxDetourTime;
     }
 
-    public int getNumberOfRejections() {
-        return numberOfRejections;
+    public void incrementNumberOfRejections() {
+        numberOfRejections++;
     }
 
     @Override
