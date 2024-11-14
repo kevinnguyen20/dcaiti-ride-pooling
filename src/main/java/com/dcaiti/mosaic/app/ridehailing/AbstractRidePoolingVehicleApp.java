@@ -55,7 +55,7 @@ public abstract class AbstractRidePoolingVehicleApp<ConfigT extends CAbstractRid
         VehicleStatusMessage shuttleStatusMsg = new VehicleStatusMessage(messageRouting, createVehicleStatus());
         getOs().getCellModule().sendV2xMessage(shuttleStatusMsg);
 
-        rides.removeIf(ride -> ride.getStatus() == Ride.Status.DROPPED_OFF);
+        // rides.removeIf(ride -> ride.getStatus() == Ride.Status.DROPPED_OFF);
 
         getOs().getEventManager().addEvent(getOs().getSimulationTime() + UPDATE_INTERVAL, e -> sendUpdate());
     }
@@ -126,20 +126,18 @@ public abstract class AbstractRidePoolingVehicleApp<ConfigT extends CAbstractRid
                 return;
             }
             rides = rideBookingMessage.getRides();
-            Queue<VehicleStop> stops = rideBookingMessage.getStops();
-            Queue<CandidateRoute> routes = rideBookingMessage.getRoutes();
-            VehicleApp vehicleApp = getVehicleApp();
-
-            vehicleApp.updateRides(rides);
-            vehicleApp.updateStops(stops);
-            vehicleApp.updateRoutes(routes);
-
-            // Create copy of ride: the original ride stays on the dispatcher's
-            // side, the copy is saved on the shuttle's side
+            stops = rideBookingMessage.getStops();
+            routes = rideBookingMessage.getRoutes();
+            
             rides.forEach(ride -> {
                 if (ride.getStatus() == Ride.Status.PENDING) ride.setStatus(Ride.Status.ASSIGNED);
                 onAcceptRide(ride);
             });
+
+            VehicleApp vehicleApp = getVehicleApp();
+            vehicleApp.updateRides(rides);
+            vehicleApp.updateStops(stops);
+            vehicleApp.updateRoutes(routes);
         }
     }
 
