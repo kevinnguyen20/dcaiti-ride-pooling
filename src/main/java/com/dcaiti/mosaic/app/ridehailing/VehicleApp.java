@@ -5,12 +5,20 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
+import org.eclipse.mosaic.fed.application.ambassador.simulation.navigation.RoadPositionFactory;
 import org.eclipse.mosaic.fed.application.app.ConfigurableApplication;
 import org.eclipse.mosaic.fed.application.app.api.VehicleApplication;
 import org.eclipse.mosaic.fed.application.app.api.os.VehicleOperatingSystem;
 import org.eclipse.mosaic.lib.enums.VehicleStopMode;
+import org.eclipse.mosaic.lib.geo.GeoPoint;
+import org.eclipse.mosaic.lib.geo.GeoUtils;
+import org.eclipse.mosaic.lib.objects.road.IConnection;
+import org.eclipse.mosaic.lib.objects.road.IRoadPosition;
 import org.eclipse.mosaic.lib.objects.vehicle.VehicleData;
 import org.eclipse.mosaic.lib.routing.CandidateRoute;
+import org.eclipse.mosaic.lib.routing.RoutingCostFunction;
+import org.eclipse.mosaic.lib.routing.RoutingParameters;
+import org.eclipse.mosaic.lib.routing.RoutingPosition;
 import org.eclipse.mosaic.lib.util.scheduling.Event;
 
 import com.dcaiti.mosaic.app.ridehailing.config.CVehicleApp;
@@ -26,14 +34,15 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
     private static long minStopTime;
     private static long maxStopTime;
     private static VehicleStopMode stopMode;
+    private static boolean considerTurnCosts;
 
     private VehicleStop currentPlannedStop = null;
     private boolean waitingForResume = false;
     private boolean initialStep = true;
+    private VehicleStop pointOfBusiness = null;
     private boolean driveToFirstStop = true;
     private CandidateRoute currentRoute = null;
     private long lastStoppedAt;
-    private int routeCalculationTries = 0;
 
     private List<Ride> rides = new ArrayList<>();
     private Queue<VehicleStop> stops = new LinkedList<>();
@@ -48,40 +57,49 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
         minStopTime = getConfiguration().stopTime;
         maxStopTime = getConfiguration().maxStopTime;
         stopMode = getConfiguration().stopMode;
+        considerTurnCosts = getConfiguration().considerTurnCosts;
     }
 
     // Called after each simulation step
     @Override
     public void onVehicleUpdated(@Nullable VehicleData previousVehicleData, @NonNull VehicleData updatedVehicleData) {
         // Log timestamp when vehicle waits for the first time
-        if ((previousVehicleData != null && !previousVehicleData.isStopped()) &&updatedVehicleData.isStopped()) lastStoppedAt = getOs().getSimulationTime();
+        if ((previousVehicleData != null && !previousVehicleData.isStopped()) && updatedVehicleData.isStopped()) lastStoppedAt = getOs().getSimulationTime();
 
         // If waiting for new requests, continue waiting
-        if (waitingForResume) return;
+        // if (waitingForResume) return;
 
-        // Drive to point of business if idle (in theory, not implemented yet)
-        String currentRouteId = getOs().getNavigationModule().getCurrentRoute().getId();
-        if (currentRouteId != null && !currentRouteId.equals(updatedVehicleData.getRouteId())) {
-            currentPlannedStop = null;
-            driveToFirstStop = true;
+        if (waitingForResume && stops.isEmpty()) {
+            stops.add(pointOfBusiness);
+            driveToPointOfBusiness();
         }
 
-        // Create a stop 100m away from spawnpoint (only once)
-        // if (initialStep) {
-        //     VehicleRoute currentRoute = getOs().getNavigationModule().getCurrentRoute();
-        //     IRoadPosition currentRoadPosition = getOs().getNavigationModule().getRoadPosition();
-        //     IRoadPosition initialStopPosition = RoadPositionFactory.createAlongRoute(currentRoadPosition, currentRoute, 0, 100);
-        //     addStop(new VehicleStop(initialStopPosition, VehicleStop.StopReason.WAITING));
-        //     initialStep = false;
+        // Drive to point of business if idle (in theory, not implemented yet)
+        // String currentRouteId = getOs().getNavigationModule().getCurrentRoute().getId();
+        // if (currentRouteId != null && !currentRouteId.equals(updatedVehicleData.getRouteId())) {
+        //     currentPlannedStop = pointOfBusiness;
+        //     driveToFirstStop = true;
         // }
 
+        // Create a point-of-business 100m away from spawnpoint
+        if (initialStep) {
+            IRoadPosition initialStopPosition = RoadPositionFactory.createAlongRoute(
+                getOs().getNavigationModule().getRoadPosition(), 
+                getOs().getNavigationModule().getCurrentRoute(), 
+                0, 
+                100
+            );
+            pointOfBusiness = new VehicleStop(initialStopPosition, VehicleStop.StopReason.WAITING);
+            stops.add(pointOfBusiness);
+            driveToPointOfBusiness();
+            initialStep = false;
+        }
+
         // Vehicle on the way to first stop but new order arrives
-        if (driveToFirstStop && !routes.isEmpty()) {
+        if (driveToFirstStop && !stops.isEmpty()) {
             driveToNextStop();
             driveToFirstStop = false;
         }
-
-
 
         // Vehicle reached stop
         if (hasReachedStop(currentPlannedStop)) {
@@ -95,6 +113,21 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
             // Wait 20 seconds and resume
             getOs().getEventManager().addEvent(getOs().getSimulationTime() + minStopTime, e -> driveToNextStop());
         }
+    }
+
+    private void driveToPointOfBusiness() {
+        final RoutingPosition target = new RoutingPosition(centerOf(pointOfBusiness.getPositionOnRoad().getConnection()), null, pointOfBusiness.getPositionOnRoad().getConnectionId());
+
+        final RoutingParameters routingParameters = new RoutingParameters()
+            .costFunction(RoutingCostFunction.Fastest)
+            .considerTurnCosts(considerTurnCosts);
+
+        final CandidateRoute bestRoute = getOs().getNavigationModule().calculateRoutes(target, routingParameters).getBestRoute();
+        routes.add(bestRoute);
+    }
+
+    private static GeoPoint centerOf(IConnection connection) {
+        return GeoUtils.getPointBetween(connection.getStartNode().getPosition(), connection.getEndNode().getPosition());
     }
 
     private void notifyOtherApps(VehicleStop rideStop) {
