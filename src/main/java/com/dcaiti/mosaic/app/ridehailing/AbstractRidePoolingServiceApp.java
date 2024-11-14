@@ -57,7 +57,7 @@ public abstract class AbstractRidePoolingServiceApp<ConfigT>
     public void onStartup() {
         getOs().getCellModule().enable();
         rideProvider = createRideBookingProvider();
-        getOs().getEventManager().addEvent(getOs().getSimulationTime()+UPDATE_INTERVAL, e -> checkPendingBookings());
+        getOs().getEventManager().addEvent(getOs().getSimulationTime() + UPDATE_INTERVAL, e -> checkPendingBookings());
     }
 
     protected abstract RideProvider createRideBookingProvider();
@@ -145,10 +145,12 @@ public abstract class AbstractRidePoolingServiceApp<ConfigT>
                     storedRide.setPickupTime(getOs().getSimulationTime());
                     onVehicleRidePickup(storedRide);
                 }
+
                 if (currentRide.getStatus() == Ride.Status.DROPPED_OFF && storedRide.getDropOffTime() == 0) {
                     storedRide.setDropOffTime(getOs().getSimulationTime());
                     onVehicleRideDropoff(storedRide);
                     getLog().infoSimTime(this, "Vehicle {} completed ride booking {}.", storedRide.getAssignedVehicleId(), storedRide.getBookingId());
+                    // rides.get(shuttle.getVehicleId()).removeIf(ride -> ride.getStatus() == Ride.Status.DROPPED_OFF);
                 }
             });
         }
