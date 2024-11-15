@@ -38,6 +38,7 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
 
     private VehicleStop currentPlannedStop = null;
     private boolean waitingForResume = false;
+    private boolean waitingAtPointOfBusiness = false;
     private boolean initialStep = true;
     private VehicleStop pointOfBusiness = null;
     private boolean driveToFirstStop = true;
@@ -70,6 +71,8 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
         // if (waitingForResume) return;
 
         if (waitingForResume && stops.isEmpty()) {
+            if (waitingAtPointOfBusiness) return;
+            currentPlannedStop = pointOfBusiness;
             stops.add(pointOfBusiness);
             driveToPointOfBusiness();
         }
@@ -90,6 +93,7 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
                 100
             );
             pointOfBusiness = new VehicleStop(initialStopPosition, VehicleStop.StopReason.WAITING);
+            currentPlannedStop = pointOfBusiness;
             stops.add(pointOfBusiness);
             driveToPointOfBusiness();
             initialStep = false;
@@ -106,6 +110,10 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
             stops.poll();
             routes.poll();
             notifyOtherApps(currentPlannedStop);
+
+            if (currentPlannedStop.getGeoPoint() == pointOfBusiness.getGeoPoint()) {
+                waitingAtPointOfBusiness = true;
+            }
 
             currentPlannedStop = null;
             waitingForResume = true;
@@ -168,6 +176,7 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
 
         if (waitingForResume) {
             getOs().resume();
+            waitingAtPointOfBusiness = false;
             waitingForResume = false;
         }
         
