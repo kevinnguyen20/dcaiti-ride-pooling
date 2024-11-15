@@ -28,6 +28,11 @@ public class CVehicleApp {
     public VehicleStopMode stopMode = VehicleStopMode.PARK_ON_ROADSIDE;
 
     /**
+     * If set to true, routing to the next stop location will consider turn costs.
+     */
+    public boolean considerTurnCosts = false;
+    
+    /**
      * If set to true, the vehicle waits at the drop-off stop
      * until the given time is reached, but it waits not more than
      * what is configured in maxStopTime.
