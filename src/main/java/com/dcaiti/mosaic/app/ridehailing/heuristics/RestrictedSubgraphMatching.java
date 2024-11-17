@@ -48,7 +48,6 @@ public class RestrictedSubgraphMatching extends AbstractHeuristics{
             if (candidateShuttle == null && vehicleIdle.size() > 0) {
                 candidateShuttle = vehicleIdle.stream()
                     .min(Comparator.comparingDouble(shuttle -> getDistanceToIdleShuttle(pickup, shuttle.getCurrentPosition())))
-                    // .map(VehicleStatus::getVehicleId)
                     .orElse(null);
 
                 assignBookingToIdleShuttle(rides, stops, routes, passenger, candidateShuttle);
@@ -107,8 +106,4 @@ public class RestrictedSubgraphMatching extends AbstractHeuristics{
     private static double distance(CartesianPoint p1, CartesianPoint p2) {
         return Math.sqrt(Math.pow(p2.getX() - p1.getX(), 2) + Math.pow(p2.getY() - p1.getY(), 2));
     }
-
-    // private static double routeLength() {
-    //     return 0.0;
-    // }
 }
