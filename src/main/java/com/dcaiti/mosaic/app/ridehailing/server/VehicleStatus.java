@@ -19,14 +19,17 @@ public class VehicleStatus implements Serializable {
 
     private final String vehicleId;
     private final GeoPoint currentPosition;
-    private List<Ride> rides = new ArrayList<>();
+    private final List<Ride> currentRides;
     private final double totalDistanceDriven;
+    
+    private List<Ride> rides = new ArrayList<>();
     private Queue<VehicleStop> stops = new LinkedList<>();
     private Queue<CandidateRoute> routes = new LinkedList<>();
 
-    public VehicleStatus(String vehicleId, GeoPoint currentPosition, double distanceDriven, List<Ride> rides, Queue<VehicleStop> stops, Queue<CandidateRoute> routes) {
+    public VehicleStatus(String vehicleId, GeoPoint currentPosition, List<Ride> currentRides, List<Ride> rides, Queue<VehicleStop> stops, Queue<CandidateRoute> routes, double distanceDriven) {
         this.vehicleId = vehicleId;
         this.currentPosition = currentPosition;
+        this.currentRides = currentRides;
         this.rides = rides;
         this.stops = stops;
         this.routes = routes;
@@ -34,7 +37,7 @@ public class VehicleStatus implements Serializable {
     }
 
     public boolean hasEnoughCapacity() {
-        return rides.size() < VEHICLE_CAPACITY;
+        return currentRides.size() < VEHICLE_CAPACITY;
     }
 
     public String getVehicleId() {
@@ -45,19 +48,23 @@ public class VehicleStatus implements Serializable {
         return currentPosition;
     }
 
-    public List<Ride> getRides() {
-        return rides;
+    public List<Ride> getCurrentRides() {
+        return currentRides;
     }
 
-    public double getTotalDistanceDriven() {
-        return totalDistanceDriven;
+    public List<Ride> getRides() {
+        return rides;
     }
 
     public Queue<VehicleStop> getStops() {
         return stops;
     }
-
+    
     public Queue<CandidateRoute> getRoutes() {
         return routes;
+    }
+
+    public double getTotalDistanceDriven() {
+        return totalDistanceDriven;
     }
 }
