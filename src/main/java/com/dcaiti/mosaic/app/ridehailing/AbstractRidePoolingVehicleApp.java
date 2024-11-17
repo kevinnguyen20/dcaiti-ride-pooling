@@ -32,9 +32,11 @@ public abstract class AbstractRidePoolingVehicleApp<ConfigT extends CAbstractRid
     private static final long UPDATE_INTERVAL = 5 * TIME.SECOND;
     private static final int VEHICLE_CAPACITY = 4;
 
-    private List<Ride> rides = new ArrayList<>();
+    private List<Ride> rides = new LinkedList<>();
     private Queue<VehicleStop> stops = new LinkedList<>();
     private Queue<CandidateRoute> routes = new LinkedList<>();
+
+    private List<Ride> currentRides = new LinkedList<>();
 
     public AbstractRidePoolingVehicleApp(Class<ConfigT> configClass) {
         super(configClass);
@@ -64,8 +66,9 @@ public abstract class AbstractRidePoolingVehicleApp<ConfigT extends CAbstractRid
         return new VehicleStatus(
             getOs().getId(),
             getOs().getNavigationModule().getCurrentPosition(),
-            getOs().getVehicleData().getDistanceDriven(),
-            rides, stops, routes
+            currentRides,
+            rides, stops, routes,
+            getOs().getVehicleData().getDistanceDriven()
         );
     }
 
@@ -87,6 +90,7 @@ public abstract class AbstractRidePoolingVehicleApp<ConfigT extends CAbstractRid
 
     protected void pickup(Ride ride) {
         ride.setStatus(Ride.Status.PICKED_UP);
+        currentRides.add(ride);
         // } else {
         //     getLog().error("The stop has been declined (invalid dropoff location).");
         //     ride.setStatus(Ride.Status.DECLINED);
@@ -96,6 +100,7 @@ public abstract class AbstractRidePoolingVehicleApp<ConfigT extends CAbstractRid
 
     protected void dropOff(Ride ride) {
         ride.setStatus(Ride.Status.DROPPED_OFF);
+        currentRides.remove(currentRides.indexOf(ride));
         onDropOff(ride);
     }
 
@@ -129,10 +134,9 @@ public abstract class AbstractRidePoolingVehicleApp<ConfigT extends CAbstractRid
             stops = rideBookingMessage.getStops();
             routes = rideBookingMessage.getRoutes();
             
-            rides.forEach(ride -> {
-                if (ride.getStatus() == Ride.Status.PENDING) ride.setStatus(Ride.Status.ASSIGNED);
-                onAcceptRide(ride);
-            });
+            rides.stream()
+                .filter(ride -> ride.getStatus() == Ride.Status.ASSIGNED)
+                .forEach(ride -> onAcceptRide(ride));
 
             VehicleApp vehicleApp = getVehicleApp();
             vehicleApp.updateRides(rides);
