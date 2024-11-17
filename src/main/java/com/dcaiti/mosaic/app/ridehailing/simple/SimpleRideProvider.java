@@ -27,6 +27,7 @@ public class SimpleRideProvider implements RideProvider {
             CRidePoolingServiceApp.CRideOrder rideOrder = rideOrders.poll();
             Ride ride = new Ride(nextId++, rideOrder.pickup, rideOrder.dropoff, false);
             ride.setCreationTime(rideOrder.orderTime);
+            ride.setDeadline(rideOrder.deadline);
             ride.setStatus(Ride.Status.PENDING);
             nextRides.add(ride);
         }

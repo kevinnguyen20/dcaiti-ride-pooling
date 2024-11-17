@@ -26,9 +26,12 @@ public class Ride implements Serializable {
     private transient String assignedVehicleId;
 
     private long creationTime;
+    private long deadline;
     private long pickupTime;
     private long dropOffTime;
     private long maxDetourTime;
+
+    private double totalDistance;
 
     private int numberOfRejections;
 
@@ -81,6 +84,10 @@ public class Ride implements Serializable {
         return creationTime;
     }
 
+    public long getDeadline() {
+        return deadline;
+    }
+
     public long getPickupTime() {
         return pickupTime;
     }
@@ -91,6 +98,10 @@ public class Ride implements Serializable {
 
     public long getmaxDetourTime() {
         return maxDetourTime;
+    }
+
+    public double getTotalDistance() {
+        return totalDistance;
     }
 
     public int getNumberOfRejections() {
@@ -109,6 +120,10 @@ public class Ride implements Serializable {
         this.creationTime = creationTime;
     }
 
+    public void setDeadline(long deadline) {
+        this.deadline = deadline;
+    }
+
     public void setPickupTime(long pickupTime) {
         this.pickupTime = pickupTime;
     }
@@ -119,6 +134,10 @@ public class Ride implements Serializable {
 
     public void setMaxDetourTime(long maxDetourTime) {
         this.maxDetourTime = maxDetourTime;
+    }
+
+    public void setTotalDistance(double totalDistance) {
+        this.totalDistance = totalDistance;
     }
 
     public void incrementNumberOfRejections() {
