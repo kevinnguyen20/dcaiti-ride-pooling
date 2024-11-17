@@ -1,0 +1,28 @@
+{
+    "rideOrders": [
+        {
+            "orderTime": "0s",
+            "deadline": "600s",
+            "pickup": {
+                "latitude": 52.513093,
+                "longitude": 13.331058
+            },
+            "dropoff": {
+                "latitude": 52.514123,
+                "longitude": 13.345852
+            }
+        },
+        {
+            "orderTime": "60s",
+            "deadline": "300s",
+            "pickup": {
+                "latitude": 52.513345,
+                "longitude": 13.335098
+            },
+            "dropoff": {
+                "latitude": 52.514586,
+                "longitude": 13.337083
+            }
+        }
+    ]
+}
