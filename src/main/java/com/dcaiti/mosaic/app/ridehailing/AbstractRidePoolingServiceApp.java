@@ -61,7 +61,7 @@ public abstract class AbstractRidePoolingServiceApp<ConfigT>
     }
 
     protected abstract RideProvider createRideBookingProvider();
-    protected abstract String chooseShuttle(Ride booking);
+    protected abstract void assignBookingsToShuttles(List<Ride> booking);
     protected abstract void calculateRouting(Ride booking, VehicleStatus shuttle);
     protected abstract void onVehicleRidePickup(Ride booking);
     protected abstract void onVehicleRideDropoff(Ride booking);
@@ -73,43 +73,67 @@ public abstract class AbstractRidePoolingServiceApp<ConfigT>
         rideProvider.findNewRides(getOs().getSimulationTime())
             .forEach(booking -> storedRides.put(booking.getBookingId(), booking));
 
-        final Map<String, Ride> assignedBookings = new HashMap<>();
-        storedRides.values().parallelStream().sorted(Comparator.comparingLong(Ride::getCreationTime)).forEach(booking -> {
-            if (booking.getStatus() != Ride.Status.PENDING) return;
+        List<Ride> newBookings = storedRides.values().parallelStream()
+            .filter(ride -> ride.getStatus() == Ride.Status.PENDING)
+            .sorted(Comparator.comparingLong(Ride::getCreationTime))
+            .toList();
+        
+        assignBookingsToShuttles(newBookings);
 
-            // Assign booking to vehicle
-            String shuttleId = chooseShuttle(booking);
-            if (shuttleId == null) return;
+        // TODO: log assigned bookings to shuttles
+        newBookings.stream()
+            .filter(booking -> booking.getStatus() == Ride.Status.ASSIGNED)
+            .forEach(booking -> {
+                String shuttleId = booking.getAssignedVehicleId();
+                getLog().infoSimTime(this, "Assigned ride booking {} to shuttle {}", booking.getBookingId(), shuttleId);
 
-            // Shuttle assignment check
-            if (assignedBookings.get(shuttleId) != null || !registeredShuttles.get(shuttleId).hasEnoughCapacity()) return;
+                MessageRouting messageRouting = getOs().getCellModule().createMessageRouting().topoCast(shuttleId);
+                getOs().getCellModule().sendV2xMessage(new RideBookingMessage(
+                    messageRouting,
+                    shuttleId,
+                    rides.get(shuttleId),
+                    stops.get(shuttleId),
+                    routes.get(shuttleId)
+                ));
+            });
 
-            // Initialize hash maps
-            rides.putIfAbsent(shuttleId, new ArrayList<>());
-            stops.putIfAbsent(shuttleId, new LinkedList<>());
-            routes.putIfAbsent(shuttleId, new LinkedList<>());
+        // final Map<String, Ride> assignedBookings = new HashMap<>();
+        // storedRides.values().parallelStream().sorted(Comparator.comparingLong(Ride::getCreationTime)).forEach(booking -> {
+        //     if (booking.getStatus() != Ride.Status.PENDING) return;
 
-            // Store ride
-            rides.get(shuttleId).add(booking);
+        //     // Assign booking to vehicle
+        //     String shuttleId = assignBookingsToShuttles(booking);
+        //     if (shuttleId == null) return;
 
-            // Add new VehicleStops + calculate new routes
-            VehicleStatus shuttle = registeredShuttles.get(shuttleId);
-            calculateRouting(booking, shuttle);
+        //     // Shuttle assignment check
+        //     if (assignedBookings.get(shuttleId) != null || !registeredShuttles.get(shuttleId).hasEnoughCapacity()) return;
 
-            getLog().infoSimTime(this, "Assigned ride booking {} to shuttle {}", booking.getBookingId(), shuttleId);
-            booking.setAssignedVehicleId(shuttleId);
-            booking.setStatus(Ride.Status.ASSIGNED);
-            assignedBookings.put(shuttleId, booking);
+        //     // Initialize hash maps
+        //     rides.putIfAbsent(shuttleId, new ArrayList<>());
+        //     stops.putIfAbsent(shuttleId, new LinkedList<>());
+        //     routes.putIfAbsent(shuttleId, new LinkedList<>());
 
-            // Send new ride booking to shuttle
-            MessageRouting messageRouting = getOs().getCellModule().createMessageRouting().topoCast(shuttleId);
-            getOs().getCellModule().sendV2xMessage(new RideBookingMessage(
-                messageRouting,
-                shuttleId,
-                rides.get(shuttleId),
-                stops.get(shuttleId),
-                routes.get(shuttleId)));
-        });
+        //     // Store ride
+        //     rides.get(shuttleId).add(booking);
+
+        //     // Add new VehicleStops + calculate new routes
+        //     VehicleStatus shuttle = registeredShuttles.get(shuttleId);
+        //     calculateRouting(booking, shuttle);
+
+            // getLog().infoSimTime(this, "Assigned ride booking {} to shuttle {}", booking.getBookingId(), shuttleId);
+        //     booking.setAssignedVehicleId(shuttleId);
+        //     booking.setStatus(Ride.Status.ASSIGNED);
+        //     assignedBookings.put(shuttleId, booking);
+
+        //     // Send new ride booking to shuttle
+        //     MessageRouting messageRouting = getOs().getCellModule().createMessageRouting().topoCast(shuttleId);
+        //     getOs().getCellModule().sendV2xMessage(new RideBookingMessage(
+        //         messageRouting,
+        //         shuttleId,
+        //         rides.get(shuttleId),
+        //         stops.get(shuttleId),
+        //         routes.get(shuttleId)));
+        // });
 
         // Check for new ride bookings every 10 seconds
         getOs().getEventManager().addEvent(getOs().getSimulationTime() + UPDATE_INTERVAL, e -> checkPendingBookings());
@@ -150,7 +174,6 @@ public abstract class AbstractRidePoolingServiceApp<ConfigT>
                     storedRide.setDropOffTime(getOs().getSimulationTime());
                     onVehicleRideDropoff(storedRide);
                     getLog().infoSimTime(this, "Vehicle {} completed ride booking {}.", storedRide.getAssignedVehicleId(), storedRide.getBookingId());
-                    // rides.get(shuttle.getVehicleId()).removeIf(ride -> ride.getStatus() == Ride.Status.DROPPED_OFF);
                 }
             });
         }

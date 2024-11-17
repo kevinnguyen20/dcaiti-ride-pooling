@@ -1,5 +1,7 @@
 package com.dcaiti.mosaic.app.ridehailing.ridepooling;
 
+import java.util.List;
+
 import org.eclipse.mosaic.fed.application.ambassador.SimulationKernel;
 import org.eclipse.mosaic.fed.application.ambassador.simulation.navigation.RoadPositionFactory;
 import org.eclipse.mosaic.lib.geo.GeoPoint;
@@ -13,6 +15,7 @@ import org.eclipse.mosaic.lib.routing.RoutingPosition;
 import org.eclipse.mosaic.lib.routing.RoutingRequest;
 
 import com.dcaiti.mosaic.app.ridehailing.AbstractRidePoolingServiceApp;
+import com.dcaiti.mosaic.app.ridehailing.heuristics.RestrictedSubgraphMatching;
 import com.dcaiti.mosaic.app.ridehailing.server.Ride;
 import com.dcaiti.mosaic.app.ridehailing.server.RideProvider;
 import com.dcaiti.mosaic.app.ridehailing.server.VehicleStatus;
@@ -25,9 +28,6 @@ public class RidePoolingServiceApp extends
 
     private static final int MAX_TRIES_CHANGE_STOP_POSITION = 10;
     private static final int MAX_TRIES_FIND_ROUTE = 10;
-    // private long minStopTime = 20 * TIME.SECOND;
-    // private long maxStopTime = 2 * TIME.MINUTE;
-    // private VehicleStopMode stopMode = VehicleStopMode.PARK_ON_ROADSIDE;
 
     public RidePoolingServiceApp() {
         super(CRidePoolingServiceApp.class);
@@ -39,12 +39,13 @@ public class RidePoolingServiceApp extends
     }
 
     @Override
-    protected String chooseShuttle(Ride booking) {
-        return registeredShuttles.values().parallelStream()
-            .filter(shuttle -> shuttle.hasEnoughCapacity())
-            .map(shuttle -> shuttle.getVehicleId())
-            .findFirst()
-            .orElse(null);
+    protected void assignBookingsToShuttles(List<Ride> bookings) {
+        RestrictedSubgraphMatching.assignBookingsToShuttles(storedRides, registeredShuttles, bookings, rides, stops, routes);
+        // return registeredShuttles.values().parallelStream()
+        //     .filter(shuttle -> shuttle.hasEnoughCapacity())
+        //     .map(shuttle -> shuttle.getVehicleId())
+        //     .findFirst()
+        //     .orElse(null);
     }
 
     // TODO: check if shuttle already has other rides
