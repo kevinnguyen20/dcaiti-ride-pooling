@@ -4,7 +4,7 @@
           "name": "RideHailingServer",
           "group": "RideHailingServer",
           "applications": [
-              "com.dcaiti.mosaic.app.ridehailing.simple.SimpleRideHailingServiceApp"
+              "com.dcaiti.mosaic.app.ridehailing.ridepooling.RidePoolingServiceApp"
 
           ]
       }
@@ -13,8 +13,8 @@
       {
           "name": "Taxi",
           "applications": [
-              "com.dcaiti.mosaic.app.ridehailing.MultiStopApp",
-              "com.dcaiti.mosaic.app.ridehailing.simple.SimpleRideHailingVehicleApp"
+              "com.dcaiti.mosaic.app.ridehailing.VehicleApp",
+              "com.dcaiti.mosaic.app.ridehailing.ridepooling.RidePoolingVehicleApp"
           ]
       }
   ],
