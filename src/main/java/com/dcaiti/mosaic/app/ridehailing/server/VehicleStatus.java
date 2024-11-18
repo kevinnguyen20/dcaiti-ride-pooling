@@ -15,12 +15,11 @@ public class VehicleStatus implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private static final int VEHICLE_CAPACITY = 4;
-
     private final String vehicleId;
     private final GeoPoint currentPosition;
     private final List<Ride> currentRides;
     private final double totalDistanceDriven;
+    private int vehicleCapacity = 4;
     
     private List<Ride> rides = new ArrayList<>();
     private Queue<VehicleStop> stops = new LinkedList<>();
@@ -37,7 +36,7 @@ public class VehicleStatus implements Serializable {
     }
 
     public boolean hasEnoughCapacity() {
-        return currentRides.size() < VEHICLE_CAPACITY;
+        return currentRides.size() < vehicleCapacity;
     }
 
     public String getVehicleId() {
@@ -66,5 +65,13 @@ public class VehicleStatus implements Serializable {
 
     public double getTotalDistanceDriven() {
         return totalDistanceDriven;
+    }
+
+    public int getVehicleCapacity() {
+        return vehicleCapacity;
+    }
+
+    public void setVehicleCapacity(int vehicleCapacity) {
+        this.vehicleCapacity = vehicleCapacity;
     }
 }
