@@ -1,8 +1,6 @@
 package com.dcaiti.mosaic.app.ridehailing;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Queue;
 
 import org.eclipse.mosaic.fed.application.ambassador.simulation.navigation.RoadPositionFactory;
@@ -22,14 +20,13 @@ import org.eclipse.mosaic.lib.routing.RoutingPosition;
 import org.eclipse.mosaic.lib.util.scheduling.Event;
 
 import com.dcaiti.mosaic.app.ridehailing.config.CVehicleApp;
-import com.dcaiti.mosaic.app.ridehailing.server.Ride;
 import com.dcaiti.mosaic.app.ridehailing.vehicle.StopEvent;
 import com.dcaiti.mosaic.app.ridehailing.vehicle.VehicleStop;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 
-public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOperatingSystem> implements VehicleApplication{
+public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOperatingSystem> implements VehicleApplication {
 
     private static long minStopTime;
     private static long maxStopTime;
@@ -45,9 +42,8 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
     private CandidateRoute currentRoute = null;
     private long lastStoppedAt;
 
-    private List<Ride> rides = new ArrayList<>();
-    private Queue<VehicleStop> stops = new LinkedList<>();
-    private Queue<CandidateRoute> routes = new LinkedList<>();
+    private Queue<VehicleStop> currentStops;
+    private Queue<CandidateRoute> currentRoutes;
 
     public VehicleApp() {
         super(CVehicleApp.class);
@@ -59,21 +55,33 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
         maxStopTime = getConfiguration().maxStopTime;
         stopMode = getConfiguration().stopMode;
         considerTurnCosts = getConfiguration().considerTurnCosts;
+
+        // Always init to add point-of-business as first stop
+        currentStops = new LinkedList<>();
+        currentRoutes = new LinkedList<>();
     }
 
     // Called after each simulation step
     @Override
     public void onVehicleUpdated(@Nullable VehicleData previousVehicleData, @NonNull VehicleData updatedVehicleData) {
+        // Create a point-of-business 100m away from spawnpoint
+        if (initialStep) {
+            createPointOfBusiness();
+            driveToPointOfBusiness();
+            initialStep = false;
+        }
+
         // Log timestamp when vehicle waits for the first time
         if ((previousVehicleData != null && !previousVehicleData.isStopped()) && updatedVehicleData.isStopped()) lastStoppedAt = getOs().getSimulationTime();
 
         // If waiting for new requests, continue waiting
         // if (waitingForResume) return;
 
-        if (waitingForResume && stops.isEmpty()) {
+        // Return to point-of-business if the list of stops is empty
+        if (waitingForResume && currentStops.isEmpty()) {
             if (waitingAtPointOfBusiness) return;
             currentPlannedStop = pointOfBusiness;
-            stops.add(pointOfBusiness);
+            currentStops.add(pointOfBusiness);
             driveToPointOfBusiness();
         }
 
@@ -84,36 +92,19 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
         //     driveToFirstStop = true;
         // }
 
-        // Create a point-of-business 100m away from spawnpoint
-        if (initialStep) {
-            IRoadPosition initialStopPosition = RoadPositionFactory.createAlongRoute(
-                getOs().getNavigationModule().getRoadPosition(), 
-                getOs().getNavigationModule().getCurrentRoute(), 
-                0, 
-                100
-            );
-            pointOfBusiness = new VehicleStop(initialStopPosition, VehicleStop.StopReason.WAITING);
-            currentPlannedStop = pointOfBusiness;
-            stops.add(pointOfBusiness);
-            driveToPointOfBusiness();
-            initialStep = false;
-        }
-
         // Vehicle on the way to first stop but new order arrives
-        if (driveToFirstStop && !stops.isEmpty()) {
+        if (driveToFirstStop && !currentStops.isEmpty()) {
             driveToNextStop();
             driveToFirstStop = false;
         }
 
         // Vehicle reached stop
         if (hasReachedStop(currentPlannedStop)) {
-            stops.poll();
-            routes.poll();
+            currentStops.poll();
+            currentRoutes.poll();
             notifyOtherApps(currentPlannedStop);
 
-            if (currentPlannedStop.getGeoPoint() == pointOfBusiness.getGeoPoint()) {
-                waitingAtPointOfBusiness = true;
-            }
+            if (currentPlannedStop.getGeoPoint() == pointOfBusiness.getGeoPoint()) waitingAtPointOfBusiness = true;
 
             currentPlannedStop = null;
             waitingForResume = true;
@@ -121,6 +112,18 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
             // Wait 20 seconds and resume
             getOs().getEventManager().addEvent(getOs().getSimulationTime() + minStopTime, e -> driveToNextStop());
         }
+    }
+
+    private void createPointOfBusiness() {
+        IRoadPosition initialStopPosition = RoadPositionFactory.createAlongRoute(
+            getOs().getNavigationModule().getRoadPosition(), 
+            getOs().getNavigationModule().getCurrentRoute(), 
+            0, 
+            100
+        );
+        pointOfBusiness = new VehicleStop(initialStopPosition, VehicleStop.StopReason.WAITING);
+        currentPlannedStop = pointOfBusiness;
+        currentStops.add(pointOfBusiness);
     }
 
     private void driveToPointOfBusiness() {
@@ -131,7 +134,7 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
             .considerTurnCosts(considerTurnCosts);
 
         final CandidateRoute bestRoute = getOs().getNavigationModule().calculateRoutes(target, routingParameters).getBestRoute();
-        routes.add(bestRoute);
+        currentRoutes.add(bestRoute);
     }
 
     private static GeoPoint centerOf(IConnection connection) {
@@ -158,7 +161,10 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
 
     private boolean isWaitingTimeReached(VehicleStop stopPosition) {
         boolean needToWait = getConfiguration().waitUntilDropOffTime;
-        if (needToWait && (stopPosition.getStopReason() == VehicleStop.StopReason.DROP_OFF || stopPosition.getStopReason() == VehicleStop.StopReason.PICK_UP)) return Math.min(stopPosition.getWaitUntil(), lastStoppedAt + maxStopTime) <= getOs().getSimulationTime();
+
+        if (needToWait && 
+            (stopPosition.getStopReason() == VehicleStop.StopReason.DROP_OFF || 
+            stopPosition.getStopReason() == VehicleStop.StopReason.PICK_UP)) return Math.min(stopPosition.getWaitUntil(), lastStoppedAt + maxStopTime) <= getOs().getSimulationTime();
 
         return true;
     }
@@ -167,9 +173,8 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
         return stopPosition.getPositionOnRoad().getConnectionId().equals(getOs().getRoadPosition().getConnectionId());
     }
 
-    // TODO: handle routes when routes alreasy exist
     public void driveToNextStop() {
-        if (routes.isEmpty()) {
+        if (currentStops.isEmpty()) {
             getOs().getEventManager().addEvent(getOs().getSimulationTime() + minStopTime, e -> driveToNextStop());
             return;
         }
@@ -180,22 +185,18 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
             waitingForResume = false;
         }
         
-        currentPlannedStop = stops.peek();
-        currentRoute = routes.peek();
+        currentPlannedStop = currentStops.peek();
+        currentRoute = currentRoutes.peek();
         getOs().getNavigationModule().switchRoute(currentRoute);
-        getOs().stop(stops.peek().getPositionOnRoad(), stopMode, Long.MAX_VALUE);
+        getOs().stop(currentStops.peek().getPositionOnRoad(), stopMode, Long.MAX_VALUE);
     }
 
-    public void updateRides(List<Ride> rides) {
-        this.rides = rides;
+    public void updateStops(Queue<VehicleStop> currentStops) {
+        this.currentStops = currentStops;
     }
 
-    public void updateStops(Queue<VehicleStop> stops) {
-        this.stops = stops;
-    }
-
-    public void updateRoutes(Queue<CandidateRoute> routes) {
-        this.routes = routes;
+    public void updateRoutes(Queue<CandidateRoute> currentRoutes) {
+        this.currentRoutes = currentRoutes;
     }
 
     @Override
