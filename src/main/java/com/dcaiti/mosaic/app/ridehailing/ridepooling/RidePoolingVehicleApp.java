@@ -10,7 +10,9 @@ public class RidePoolingVehicleApp extends AbstractRidePoolingVehicleApp<CAbstra
     }
 
     @Override
-    protected void onAcceptRide(Ride ride) {}
+    protected void onAcceptRide(Ride ride) {
+        currentRides.add(ride);
+    }
 
     @Override
     protected void onPickup(Ride ride) {}
