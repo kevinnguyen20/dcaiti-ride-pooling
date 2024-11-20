@@ -15,32 +15,32 @@ import javax.annotation.Nonnull;
 
 public class RideBookingMessage extends V2xMessage {
     private final String targetVehicle;
-    private final List<Ride> rides;
-    private final Queue<VehicleStop> stops;
-    private final Queue<CandidateRoute> routes;
+    private final List<Ride> allRides;
+    private final Queue<VehicleStop> currentStops;
+    private final Queue<CandidateRoute> currentRoutes;
 
     public RideBookingMessage(MessageRouting routing, String targetVehicle, List<Ride> rides, Queue<VehicleStop> stops, Queue<CandidateRoute> routes) {
         super(routing);
         this.targetVehicle = targetVehicle;
-        this.rides = rides;
-        this.stops = stops;
-        this.routes = routes;
+        this.allRides = rides;
+        this.currentStops = stops;
+        this.currentRoutes = routes;
     }
 
     public String getTargetVehicle() {
         return targetVehicle;
     }
 
-    public List<Ride> getRides() {
-        return rides;
+    public List<Ride> getAllRides() {
+        return allRides;
     }
 
-    public Queue<VehicleStop> getStops() {
-        return stops;
+    public Queue<VehicleStop> getCurrentStops() {
+        return currentStops;
     }
 
-    public Queue<CandidateRoute> getRoutes() {
-        return routes;
+    public Queue<CandidateRoute> getCurrentRoutes() {
+        return currentRoutes;
     }
 
     @Nonnull
