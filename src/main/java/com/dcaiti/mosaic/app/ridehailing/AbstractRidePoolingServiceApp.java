@@ -94,6 +94,8 @@ public abstract class AbstractRidePoolingServiceApp<ConfigT>
         getOs().getEventManager().addEvent(getOs().getSimulationTime() + UPDATE_INTERVAL, e -> checkPendingBookings());
     }
 
+    // TODO: add method handling rejected rides, e.g., limit number of
+    // declinations 
     @Override
     public void onMessageReceived(ReceivedV2xMessage receivedV2xMessage) {
         if (receivedV2xMessage.getMessage() instanceof VehicleStatusMessage shuttleStatusMsg) {
