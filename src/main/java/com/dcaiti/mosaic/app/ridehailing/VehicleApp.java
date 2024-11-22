@@ -191,6 +191,7 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
         getOs().stop(currentStops.peek().getPositionOnRoad(), stopMode, Long.MAX_VALUE);
     }
 
+    // TODO: check new stops and routes, temporal differences
     public void updateStops(Queue<VehicleStop> currentStops) {
         this.currentStops = currentStops;
         if (currentPlannedStop != null) {
