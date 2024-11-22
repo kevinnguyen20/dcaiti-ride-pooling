@@ -55,8 +55,7 @@ public abstract class AbstractRidePoolingVehicleApp<ConfigT extends CAbstractRid
         MessageRouting messageRouting = getOs().getCellModule().createMessageRouting().topoCast(getConfiguration().serverName);
         VehicleStatusMessage shuttleStatusMsg = new VehicleStatusMessage(
             messageRouting, 
-            createVehicleStatus(),
-            allRides, currentStops, currentRoutes
+            createVehicleStatus()
         );
 
         getOs().getCellModule().sendV2xMessage(shuttleStatusMsg);
