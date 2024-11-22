@@ -7,10 +7,8 @@ import com.dcaiti.mosaic.app.ridehailing.server.RideProvider;
 import com.dcaiti.mosaic.app.ridehailing.server.VehicleStatus;
 import com.dcaiti.mosaic.app.ridehailing.vehicle.VehicleStop;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -42,12 +40,9 @@ public abstract class AbstractRidePoolingServiceApp<ConfigT>
     // List of rides for each shuttle
     protected static final Map<String, List<Ride>> rides = new HashMap<>();
     // List of VehicleStops for each vehicle (sorted)
-    protected static final Map<String, Queue<VehicleStop>> stops = new HashMap<>();
+    protected static Map<String, Queue<VehicleStop>> stops = new HashMap<>();
     // List of routes for each vehicle (sorted)
     protected static Map<String, Queue<CandidateRoute>> routes = new HashMap<>();
-
-    // TODO: queue for routing, if add new routes, replace old route at position
-    // n with 2 new routes
     
     protected AbstractRidePoolingServiceApp(Class<ConfigT> configClass) {
         super(configClass);
@@ -62,7 +57,6 @@ public abstract class AbstractRidePoolingServiceApp<ConfigT>
 
     protected abstract RideProvider createRideBookingProvider();
     protected abstract void assignBookingsToShuttles(List<Ride> booking);
-    protected abstract void calculateRouting(Ride booking, VehicleStatus shuttle);
     protected abstract void onVehicleRidePickup(Ride booking);
     protected abstract void onVehicleRideDropoff(Ride booking);
 
@@ -80,7 +74,6 @@ public abstract class AbstractRidePoolingServiceApp<ConfigT>
         
         assignBookingsToShuttles(newBookings);
 
-        // TODO: log assigned bookings to shuttles
         newBookings.stream()
             .filter(booking -> booking.getStatus() == Ride.Status.ASSIGNED)
             .forEach(booking -> {
@@ -97,44 +90,6 @@ public abstract class AbstractRidePoolingServiceApp<ConfigT>
                 ));
             });
 
-        // final Map<String, Ride> assignedBookings = new HashMap<>();
-        // storedRides.values().parallelStream().sorted(Comparator.comparingLong(Ride::getCreationTime)).forEach(booking -> {
-        //     if (booking.getStatus() != Ride.Status.PENDING) return;
-
-        //     // Assign booking to vehicle
-        //     String shuttleId = assignBookingsToShuttles(booking);
-        //     if (shuttleId == null) return;
-
-        //     // Shuttle assignment check
-        //     if (assignedBookings.get(shuttleId) != null || !registeredShuttles.get(shuttleId).hasEnoughCapacity()) return;
-
-        //     // Initialize hash maps
-        //     rides.putIfAbsent(shuttleId, new ArrayList<>());
-        //     stops.putIfAbsent(shuttleId, new LinkedList<>());
-        //     routes.putIfAbsent(shuttleId, new LinkedList<>());
-
-        //     // Store ride
-        //     rides.get(shuttleId).add(booking);
-
-        //     // Add new VehicleStops + calculate new routes
-        //     VehicleStatus shuttle = registeredShuttles.get(shuttleId);
-        //     calculateRouting(booking, shuttle);
-
-            // getLog().infoSimTime(this, "Assigned ride booking {} to shuttle {}", booking.getBookingId(), shuttleId);
-        //     booking.setAssignedVehicleId(shuttleId);
-        //     booking.setStatus(Ride.Status.ASSIGNED);
-        //     assignedBookings.put(shuttleId, booking);
-
-        //     // Send new ride booking to shuttle
-        //     MessageRouting messageRouting = getOs().getCellModule().createMessageRouting().topoCast(shuttleId);
-        //     getOs().getCellModule().sendV2xMessage(new RideBookingMessage(
-        //         messageRouting,
-        //         shuttleId,
-        //         rides.get(shuttleId),
-        //         stops.get(shuttleId),
-        //         routes.get(shuttleId)));
-        // });
-
         // Check for new ride bookings every 10 seconds
         getOs().getEventManager().addEvent(getOs().getSimulationTime() + UPDATE_INTERVAL, e -> checkPendingBookings());
     }
@@ -146,11 +101,11 @@ public abstract class AbstractRidePoolingServiceApp<ConfigT>
             VehicleStatus shuttle = shuttleStatusMsg.getStatus();
             registeredShuttles.put(shuttle.getVehicleId(), shuttle);
 
-            List<Ride> listOfCurrentRides = shuttle.getRides();
-            if (listOfCurrentRides.isEmpty()) return;
+            // Update list of current rides
+            List<Ride> currentRides = shuttle.getCurrentRides();
+            if (currentRides.isEmpty()) return;
 
-            // Update stored rides
-            listOfCurrentRides.forEach(currentRide -> {
+            currentRides.forEach(currentRide -> {
                 Ride storedRide = storedRides.get(currentRide.getBookingId());
                 // TODO: exception handling required
                 if (!shuttle.getVehicleId().equals(storedRide.getAssignedVehicleId())) return;
@@ -171,6 +126,10 @@ public abstract class AbstractRidePoolingServiceApp<ConfigT>
                 }
 
                 if (currentRide.getStatus() == Ride.Status.DROPPED_OFF && storedRide.getDropOffTime() == 0) {
+                    // Remove ride from vehicle's list of current rides
+                    registeredShuttles.get(currentRide.getAssignedVehicleId()).getCurrentRides().remove(currentRide);
+
+                    // Log dropoff time in dispatcher's list
                     storedRide.setDropOffTime(getOs().getSimulationTime());
                     onVehicleRideDropoff(storedRide);
                     getLog().infoSimTime(this, "Vehicle {} completed ride booking {}.", storedRide.getAssignedVehicleId(), storedRide.getBookingId());
