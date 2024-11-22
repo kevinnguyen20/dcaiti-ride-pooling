@@ -20,8 +20,9 @@ public class RidePoolingServiceApp extends
     }
 
     @Override
-    protected void assignBookingsToShuttles(List<Ride> bookings) {
-        RestrictedSubgraphMatching.assignBookingsToShuttles(storedRides, registeredShuttles, bookings, rides, stops, routes);
+    protected void assignBookingsToShuttles(List<Ride> newBookings) {
+        // Vehicle capacity of 2
+        RestrictedSubgraphMatching.assignBookingsToShuttles(storedRides, registeredShuttles, newBookings, rides, stops, routes);
     }
 
     @Override
