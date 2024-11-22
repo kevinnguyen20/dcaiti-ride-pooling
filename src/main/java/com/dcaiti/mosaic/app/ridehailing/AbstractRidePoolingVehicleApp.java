@@ -30,7 +30,7 @@ public abstract class AbstractRidePoolingVehicleApp<ConfigT extends CAbstractRid
 
     private static final long UPDATE_INTERVAL = 5 * TIME.SECOND;
     // TODO: heuristic determine this value or set this value upon spawn
-    private static final int VEHICLE_CAPACITY = 2;
+    private static final int VEHICLE_CAPACITY = 0;
 
     private List<Ride> allRides = new LinkedList<>();
     private Queue<VehicleStop> currentStops = new LinkedList<>();
@@ -109,6 +109,7 @@ public abstract class AbstractRidePoolingVehicleApp<ConfigT extends CAbstractRid
             .orElseThrow(() -> new IllegalStateException("This app requires MultiStopApp to be mapped"));
     }
 
+    // Receive message upon new accepted ride
     @Override
     public void onMessageReceived(ReceivedV2xMessage receivedV2xMessage) {
         if (receivedV2xMessage.getMessage() instanceof RideBookingMessage rideBookingMessage) {
@@ -123,13 +124,30 @@ public abstract class AbstractRidePoolingVehicleApp<ConfigT extends CAbstractRid
                 getLog().error("Shuttle's capacity reached.");
                 return;
             }
+
+            // Update information
             allRides = rideBookingMessage.getAllRides();
             currentStops = rideBookingMessage.getCurrentStops();
             currentRoutes = rideBookingMessage.getCurrentRoutes();
-            
-            allRides.stream()
-                .filter(ride -> ride.getStatus() == Ride.Status.ASSIGNED)
-                .forEach(ride -> onAcceptRide(ride));
+
+            allRides.parallelStream().forEach(ride -> {
+                switch (ride.getStatus()) {
+                    // Remove dropped off/rejected vehicles from currentRides
+                    case DROPPED_OFF, REJECTED -> currentRides.remove(ride);
+                    case ASSIGNED -> {
+                        // Decline rides if capacity is reached
+                        if (currentRides.size() >= VEHICLE_CAPACITY) {
+                            getLog().error("Shuttle's capacity reached.");
+                            ride.setStatus(Ride.Status.DECLINED);
+                            currentRides.add(ride);
+                        } else {
+                            // Add accepted rides to currentRides
+                            onAcceptRide(ride);
+                        }
+                    }
+                    default -> throw new IllegalArgumentException("Unexpected value: " + ride.getStatus());
+                }
+            });
 
             VehicleApp vehicleApp = getVehicleApp();
             // IMPORTANT: UPDATE ROUTES FIRST, THEN STOPS

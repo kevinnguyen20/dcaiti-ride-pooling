@@ -11,6 +11,9 @@ public class RidePoolingVehicleApp extends AbstractRidePoolingVehicleApp<CAbstra
 
     @Override
     protected void onAcceptRide(Ride ride) {
+        currentRides.stream()
+            .filter(currentRide -> currentRide.getBookingId() == ride.getBookingId())
+            .forEach(currentRide -> currentRides.remove(currentRide));
         currentRides.add(ride);
     }
 
