@@ -193,10 +193,16 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
 
     public void updateStops(Queue<VehicleStop> currentStops) {
         this.currentStops = currentStops;
+        if (currentPlannedStop != null) {
+            getOs().stop(currentPlannedStop.getPositionOnRoad(), stopMode, 0);
+            currentPlannedStop = currentStops.peek();
+            getOs().stop(currentPlannedStop.getPositionOnRoad(), stopMode, Long.MAX_VALUE);
+        }
     }
 
     public void updateRoutes(Queue<CandidateRoute> currentRoutes) {
         this.currentRoutes = currentRoutes;
+        if (currentRoutes.peek() != null) getOs().getNavigationModule().switchRoute(currentRoutes.peek());
     }
 
     @Override
