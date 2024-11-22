@@ -193,6 +193,8 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
 
     // TODO: check new stops and routes, temporal differences
     public void updateStops(Queue<VehicleStop> currentStops) {
+        // No update if queue is empty
+        if (currentStops.size() == 0) return;
         this.currentStops = currentStops;
         if (currentPlannedStop != null) {
             getOs().stop(currentPlannedStop.getPositionOnRoad(), stopMode, 0);
@@ -202,6 +204,8 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
     }
 
     public void updateRoutes(Queue<CandidateRoute> currentRoutes) {
+        // No update if queue is empty
+        if (currentRoutes.size() == 0) return;
         this.currentRoutes = currentRoutes;
         if (currentRoutes.peek() != null) getOs().getNavigationModule().switchRoute(currentRoutes.peek());
     }
