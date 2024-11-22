@@ -93,9 +93,7 @@ public abstract class AbstractRidePoolingServiceApp<ConfigT>
         // Check for new ride bookings every 10 seconds
         getOs().getEventManager().addEvent(getOs().getSimulationTime() + UPDATE_INTERVAL, e -> checkPendingBookings());
     }
-
-    // TODO: add method handling rejected rides, e.g., limit number of
-    // declinations 
+ 
     @Override
     public void onMessageReceived(ReceivedV2xMessage receivedV2xMessage) {
         if (receivedV2xMessage.getMessage() instanceof VehicleStatusMessage shuttleStatusMsg) {
@@ -116,6 +114,8 @@ public abstract class AbstractRidePoolingServiceApp<ConfigT>
                     storedRide.setStatus(Ride.Status.PENDING);
                     storedRide.setPickupTime(0);
                     storedRide.setDropOffTime(0);
+                    // TODO: add method handling rejected rides, e.g., limit
+                    // number of declinations
                     storedRide.incrementNumberOfRejections();
                     storedRide.setAssignedVehicleId(null);
                 } else {
