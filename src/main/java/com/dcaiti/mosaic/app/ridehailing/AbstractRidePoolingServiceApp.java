@@ -111,6 +111,7 @@ public abstract class AbstractRidePoolingServiceApp<ConfigT>
                 if (!shuttle.getVehicleId().equals(storedRide.getAssignedVehicleId())) return;
 
                 if (currentRide.getStatus() == Ride.Status.DECLINED) {
+                    getLog().infoSimTime(this, "Shuttle {} declined ride booking {}", shuttle.getVehicleId(), currentRide.getBookingId());
                     storedRide.setStatus(Ride.Status.PENDING);
                     storedRide.setPickupTime(0);
                     storedRide.setDropOffTime(0);
