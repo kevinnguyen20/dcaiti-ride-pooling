@@ -1,6 +1,5 @@
 package com.dcaiti.mosaic.app.ridehailing;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -30,13 +29,13 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 public abstract class AbstractRidePoolingVehicleApp<ConfigT extends CAbstractRidePoolingVehicleApp> extends ConfigurableApplication<ConfigT, VehicleOperatingSystem> implements CommunicationApplication {
 
     private static final long UPDATE_INTERVAL = 5 * TIME.SECOND;
-    private static final int VEHICLE_CAPACITY = 4;
+    // TODO: heuristic determine this value or set this value upon spawn
+    private static final int VEHICLE_CAPACITY = 2;
 
-    private List<Ride> rides = new LinkedList<>();
-    private Queue<VehicleStop> stops = new LinkedList<>();
-    private Queue<CandidateRoute> routes = new LinkedList<>();
-
-    private List<Ride> currentRides = new LinkedList<>();
+    private List<Ride> allRides = new LinkedList<>();
+    private Queue<VehicleStop> currentStops = new LinkedList<>();
+    private Queue<CandidateRoute> currentRoutes = new LinkedList<>();
+    protected List<Ride> currentRides = new LinkedList<>();
 
     public AbstractRidePoolingVehicleApp(Class<ConfigT> configClass) {
         super(configClass);
@@ -54,10 +53,13 @@ public abstract class AbstractRidePoolingVehicleApp<ConfigT extends CAbstractRid
 
     private void sendUpdate() {
         MessageRouting messageRouting = getOs().getCellModule().createMessageRouting().topoCast(getConfiguration().serverName);
-        VehicleStatusMessage shuttleStatusMsg = new VehicleStatusMessage(messageRouting, createVehicleStatus());
-        getOs().getCellModule().sendV2xMessage(shuttleStatusMsg);
+        VehicleStatusMessage shuttleStatusMsg = new VehicleStatusMessage(
+            messageRouting, 
+            createVehicleStatus(),
+            allRides, currentStops, currentRoutes
+        );
 
-        // rides.removeIf(ride -> ride.getStatus() == Ride.Status.DROPPED_OFF);
+        getOs().getCellModule().sendV2xMessage(shuttleStatusMsg);
 
         getOs().getEventManager().addEvent(getOs().getSimulationTime() + UPDATE_INTERVAL, e -> sendUpdate());
     }
@@ -67,18 +69,17 @@ public abstract class AbstractRidePoolingVehicleApp<ConfigT extends CAbstractRid
             getOs().getId(),
             getOs().getNavigationModule().getCurrentPosition(),
             currentRides,
-            rides, stops, routes,
             getOs().getVehicleData().getDistanceDriven()
         );
     }
 
     @Override
     public void processEvent(Event event) {
-        if (event instanceof StopEvent rideStop && !rides.isEmpty()) {
+        if (event instanceof StopEvent rideStop && !allRides.isEmpty()) {
             int rideId = rideStop.getRideStop().getRideId();
             VehicleStop.StopReason stopReason = rideStop.getRideStop().getStopReason();
 
-            rides.parallelStream()
+            allRides.parallelStream()
                 .filter(ride -> ride.getBookingId() == rideId)
                 .forEach(ride -> {
                     if (stopReason == VehicleStop.StopReason.PICK_UP) pickup(ride);
@@ -90,7 +91,6 @@ public abstract class AbstractRidePoolingVehicleApp<ConfigT extends CAbstractRid
 
     protected void pickup(Ride ride) {
         ride.setStatus(Ride.Status.PICKED_UP);
-        currentRides.add(ride);
         // } else {
         //     getLog().error("The stop has been declined (invalid dropoff location).");
         //     ride.setStatus(Ride.Status.DECLINED);
@@ -100,7 +100,6 @@ public abstract class AbstractRidePoolingVehicleApp<ConfigT extends CAbstractRid
 
     protected void dropOff(Ride ride) {
         ride.setStatus(Ride.Status.DROPPED_OFF);
-        currentRides.remove(currentRides.indexOf(ride));
         onDropOff(ride);
     }
 
@@ -109,10 +108,6 @@ public abstract class AbstractRidePoolingVehicleApp<ConfigT extends CAbstractRid
             .filter(app -> app instanceof VehicleApp)
             .findFirst()
             .orElseThrow(() -> new IllegalStateException("This app requires MultiStopApp to be mapped"));
-        // for (Application application : getOs().getApplications()) {
-        //     if (application instanceof VehicleApp) return (VehicleApp) application;
-        // }
-        // throw new IllegalStateException("This app requires MultiStopApp to be mapped");
     }
 
     @Override
@@ -124,24 +119,23 @@ public abstract class AbstractRidePoolingVehicleApp<ConfigT extends CAbstractRid
                 return;
             }
 
-            // Shuttle's capacity reached
             // TODO: set status DECLINED for ride
-            if (!(rides.size() < VEHICLE_CAPACITY)) {
+            if (currentRides.size() >= VEHICLE_CAPACITY) {
                 getLog().error("Shuttle's capacity reached.");
                 return;
             }
-            rides = rideBookingMessage.getRides();
-            stops = rideBookingMessage.getStops();
-            routes = rideBookingMessage.getRoutes();
+            allRides = rideBookingMessage.getAllRides();
+            currentStops = rideBookingMessage.getCurrentStops();
+            currentRoutes = rideBookingMessage.getCurrentRoutes();
             
-            rides.stream()
+            allRides.stream()
                 .filter(ride -> ride.getStatus() == Ride.Status.ASSIGNED)
                 .forEach(ride -> onAcceptRide(ride));
 
             VehicleApp vehicleApp = getVehicleApp();
-            vehicleApp.updateRides(rides);
-            vehicleApp.updateStops(stops);
-            vehicleApp.updateRoutes(routes);
+            // IMPORTANT: UPDATE ROUTES FIRST, THEN STOPS
+            vehicleApp.updateRoutes(currentRoutes);
+            vehicleApp.updateStops(currentStops);
         }
     }
 
