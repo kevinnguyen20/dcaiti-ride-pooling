@@ -30,7 +30,7 @@ public abstract class AbstractRidePoolingVehicleApp<ConfigT extends CAbstractRid
 
     private static final long UPDATE_INTERVAL = 5 * TIME.SECOND;
     // TODO: heuristic determine this value or set this value upon spawn
-    private static final int VEHICLE_CAPACITY = 0;
+    private static final int VEHICLE_CAPACITY = 2;
 
     private List<Ride> allRides = new LinkedList<>();
     private Queue<VehicleStop> currentStops = new LinkedList<>();
