@@ -72,7 +72,7 @@ public abstract class AbstractRidePoolingServiceApp<ConfigT>
             .sorted(Comparator.comparingLong(Ride::getCreationTime))
             .toList();
         
-        assignBookingsToShuttles(newBookings);
+        if (!newBookings.isEmpty()) assignBookingsToShuttles(newBookings);
 
         newBookings.stream()
             .filter(booking -> booking.getStatus() == Ride.Status.ASSIGNED)
