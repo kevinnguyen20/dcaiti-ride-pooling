@@ -140,10 +140,9 @@ public abstract class AbstractRidePoolingVehicleApp<ConfigT extends CAbstractRid
                             getLog().error("Shuttle's capacity reached.");
                             ride.setStatus(Ride.Status.DECLINED);
                             currentRides.add(ride);
-                        } else {
-                            // Add accepted rides to currentRides
-                            onAcceptRide(ride);
                         }
+                        // Add accepted rides to currentRides
+                        onAcceptRide(ride);
                     }
                     default -> throw new IllegalArgumentException("Unexpected value: " + ride.getStatus());
                 }
