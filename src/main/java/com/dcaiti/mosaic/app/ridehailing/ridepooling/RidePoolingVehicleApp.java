@@ -1,7 +1,5 @@
 package com.dcaiti.mosaic.app.ridehailing.ridepooling;
 
-import java.util.List;
-
 import com.dcaiti.mosaic.app.ridehailing.AbstractRidePoolingVehicleApp;
 import com.dcaiti.mosaic.app.ridehailing.config.CAbstractRidePoolingVehicleApp;
 import com.dcaiti.mosaic.app.ridehailing.server.Ride;
@@ -11,13 +9,9 @@ public class RidePoolingVehicleApp extends AbstractRidePoolingVehicleApp<CAbstra
         super(CAbstractRidePoolingVehicleApp.class);
     }
 
-    @Override
-    protected void onAcceptRide(Ride ride) {
-        List<Ride> ridesToRemove = currentRides.parallelStream()
-            .filter(currentRide -> currentRide.getBookingId() == ride.getBookingId())
-            .toList();
-
-        currentRides.removeAll(ridesToRemove);
+    @Override 
+    protected synchronized void onAcceptRide(Ride ride) {
+        currentRides.removeIf(currentRide -> currentRide.getBookingId() == ride.getBookingId());
         currentRides.add(ride);
     }
 
