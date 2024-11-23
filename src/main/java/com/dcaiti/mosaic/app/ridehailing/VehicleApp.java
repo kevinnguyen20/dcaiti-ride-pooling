@@ -28,6 +28,8 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 
 public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOperatingSystem> implements VehicleApplication {
 
+    private static final boolean TURN_COSTS = false;
+
     private static long minStopTime;
     private static long maxStopTime;
     private static VehicleStopMode stopMode;
@@ -207,7 +209,18 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
         // No update if queue is empty
         if (currentRoutes.size() == 0) return;
         this.currentRoutes = currentRoutes;
-        if (currentRoutes.peek() != null) getOs().getNavigationModule().switchRoute(currentRoutes.peek());
+        if (currentRoutes.peek() != null) {
+            IRoadPosition shuttlePositionOnRoad = getOs().getVehicleData().getRoadPosition();
+            if (!(currentRoutes.peek().getConnectionIds().parallelStream().filter(connectionId -> connectionId.equals(shuttlePositionOnRoad.getConnectionId())).findFirst().isPresent())) {
+                RoutingPosition target = new RoutingPosition(centerOf(currentPlannedStop.getPositionOnRoad().getConnection()), null, currentPlannedStop.getPositionOnRoad().getConnectionId());
+                RoutingParameters routingParameters = new RoutingParameters()
+                    .costFunction(RoutingCostFunction.Fastest)
+                    .considerTurnCosts(TURN_COSTS);
+                CandidateRoute newRoute = getOs().getNavigationModule().calculateRoutes(target, routingParameters).getBestRoute();
+                getOs().getNavigationModule().switchRoute(newRoute);
+            } else
+            getOs().getNavigationModule().switchRoute(currentRoutes.peek());
+        }
     }
 
     @Override
