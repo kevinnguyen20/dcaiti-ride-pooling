@@ -142,6 +142,7 @@ public abstract class AbstractRidePoolingVehicleApp<ConfigT extends CAbstractRid
                             currentRides.add(ride);
                         }
                         // Add accepted rides to currentRides
+                        // TODO: this also adds declined rides
                         onAcceptRide(ride);
                     }
                     default -> throw new IllegalArgumentException("Unexpected value: " + ride.getStatus());
