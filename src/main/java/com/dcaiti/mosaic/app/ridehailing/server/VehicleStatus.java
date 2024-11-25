@@ -13,7 +13,7 @@ public class VehicleStatus implements Serializable {
     private final GeoPoint currentPosition;
     private final List<Ride> currentRides;
     private final double totalDistanceDriven;
-    private int vehicleCapacity = 4;
+    private int vehicleCapacity = 2;
 
     public VehicleStatus(String vehicleId, GeoPoint currentPosition, List<Ride> currentRides, double distanceDriven) {
         this.vehicleId = vehicleId;

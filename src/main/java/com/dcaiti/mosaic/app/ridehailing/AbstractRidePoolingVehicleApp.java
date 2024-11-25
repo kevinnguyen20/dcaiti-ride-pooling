@@ -36,6 +36,8 @@ public abstract class AbstractRidePoolingVehicleApp<ConfigT extends CAbstractRid
     private Queue<VehicleStop> currentStops = new LinkedList<>();
     private Queue<CandidateRoute> currentRoutes = new LinkedList<>();
     protected List<Ride> currentRides = new LinkedList<>();
+    private List<Ride> declinedRides = new LinkedList<>();
+    protected List<Ride> finishedRides = new LinkedList<>();
 
     public AbstractRidePoolingVehicleApp(Class<ConfigT> configClass) {
         super(configClass);
@@ -55,8 +57,12 @@ public abstract class AbstractRidePoolingVehicleApp<ConfigT extends CAbstractRid
         MessageRouting messageRouting = getOs().getCellModule().createMessageRouting().topoCast(getConfiguration().serverName);
         VehicleStatusMessage shuttleStatusMsg = new VehicleStatusMessage(
             messageRouting, 
-            createVehicleStatus()
+            createVehicleStatus(),
+            declinedRides,
+            finishedRides
         );
+        declinedRides = new LinkedList<>();
+        finishedRides = new LinkedList<>();
 
         getOs().getCellModule().sendV2xMessage(shuttleStatusMsg);
 
@@ -119,40 +125,41 @@ public abstract class AbstractRidePoolingVehicleApp<ConfigT extends CAbstractRid
                 return;
             }
 
-            // TODO: set status DECLINED for ride
-            if (currentRides.size() >= VEHICLE_CAPACITY) {
-                getLog().error("Shuttle's capacity reached.");
-                return;
-            }
-
             // Update information
             allRides = rideBookingMessage.getAllRides();
             currentStops = rideBookingMessage.getCurrentStops();
             currentRoutes = rideBookingMessage.getCurrentRoutes();
+            declinedRides = new LinkedList<>();
+            finishedRides = new LinkedList<>();
 
-            allRides.parallelStream().forEach(ride -> {
+            allRides.parallelStream().filter(ride -> ride.getAssignedVehicleId().equals(getOs().getId())).forEach(ride -> {
                 switch (ride.getStatus()) {
-                    // Remove dropped off/rejected vehicles from currentRides
-                    case DROPPED_OFF, REJECTED -> currentRides.remove(ride);
+                    case DROPPED_OFF, REJECTED -> {}
                     case ASSIGNED -> {
                         // Decline rides if capacity is reached
                         if (currentRides.size() >= VEHICLE_CAPACITY) {
-                            getLog().error("Shuttle's capacity reached.");
+                            getLog().warn("Shuttle's capacity reached.");
                             ride.setStatus(Ride.Status.DECLINED);
-                            currentRides.add(ride);
+                            declinedRides.add(ride);
+                            System.err.println();
+                            System.err.println("Ride declined.");
+                        } else {
+                            // Add accepted rides to currentRides
+                            onAcceptRide(ride);
+                            System.err.println();
+                            System.err.println("Accepted ride: "+ride.getBookingId());
+                            System.err.println();
                         }
-                        // Add accepted rides to currentRides
-                        // TODO: this also adds declined rides
-                        onAcceptRide(ride);
                     }
                     default -> throw new IllegalArgumentException("Unexpected value: " + ride.getStatus());
                 }
             });
-
-            VehicleApp vehicleApp = getVehicleApp();
-            // IMPORTANT: UPDATE ROUTES FIRST, THEN STOPS
-            vehicleApp.updateRoutes(currentRoutes);
-            vehicleApp.updateStops(currentStops);
+            if (declinedRides.isEmpty()) {
+                VehicleApp vehicleApp = getVehicleApp();
+                // IMPORTANT: UPDATE ROUTES FIRST, THEN STOPS
+                vehicleApp.updateRoutes(currentRoutes);
+                vehicleApp.updateStops(currentStops);
+            }
         }
     }
 

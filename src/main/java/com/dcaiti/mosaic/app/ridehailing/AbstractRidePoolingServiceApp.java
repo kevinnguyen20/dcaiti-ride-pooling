@@ -101,17 +101,11 @@ public abstract class AbstractRidePoolingServiceApp<ConfigT>
             VehicleStatus shuttle = shuttleStatusMsg.getStatus();
             registeredShuttles.put(shuttle.getVehicleId(), shuttle);
 
-            // Update list of current rides
-            List<Ride> currentRides = shuttle.getCurrentRides();
-            if (currentRides.isEmpty()) return;
-
-            currentRides.forEach(currentRide -> {
-                Ride storedRide = storedRides.get(currentRide.getBookingId());
-                // TODO: exception handling required
-                if (!shuttle.getVehicleId().equals(storedRide.getAssignedVehicleId())) return;
-
-                if (currentRide.getStatus() == Ride.Status.DECLINED) {
-                    getLog().infoSimTime(this, "Shuttle {} declined ride booking {}", shuttle.getVehicleId(), currentRide.getBookingId());
+            List<Ride> declinedRides = shuttleStatusMsg.getDeclinedRides();
+            if (!declinedRides.isEmpty()) {
+                declinedRides.forEach(declinedRide -> {
+                    Ride storedRide = storedRides.get(declinedRide.getBookingId());
+                    getLog().infoSimTime(this, "Shuttle {} declined ride booking {}", shuttle.getVehicleId(), declinedRide.getBookingId());
                     storedRide.setStatus(Ride.Status.PENDING);
                     storedRide.setPickupTime(0);
                     storedRide.setDropOffTime(0);
@@ -119,23 +113,40 @@ public abstract class AbstractRidePoolingServiceApp<ConfigT>
                     // number of declinations
                     storedRide.incrementNumberOfRejections();
                     storedRide.setAssignedVehicleId(null);
-                } else {
-                    storedRide.setStatus(currentRide.getStatus());
-                }
+                });
+            }
+
+            List<Ride> finishedRides = shuttleStatusMsg.getFinishedRides();
+            if (!finishedRides.isEmpty()) {
+                finishedRides.forEach(finishedRide -> {
+                    Ride storedRide = storedRides.get(finishedRide.getBookingId());
+                    getLog().infoSimTime(this, "Vehicle {} completed ride booking {}.", storedRide.getAssignedVehicleId(), storedRide.getBookingId());
+                    if (finishedRide.getStatus() == Ride.Status.DROPPED_OFF && storedRide.getDropOffTime() == 0) {
+                        storedRide.setStatus(finishedRide.getStatus());
+                        // Remove ride from vehicle's list of current rides
+                        registeredShuttles.get(shuttle.getVehicleId()).getCurrentRides().remove(finishedRide);
+    
+                        // Log dropoff time in dispatcher's list
+                        storedRide.setDropOffTime(getOs().getSimulationTime());
+                        onVehicleRideDropoff(storedRide);
+                    }
+                });
+            }
+
+            // Update list of current rides
+            List<Ride> currentRides = shuttle.getCurrentRides();
+            if (currentRides.isEmpty()) return;
+
+            currentRides.forEach(currentRide -> {
+                Ride storedRide = storedRides.get(currentRide.getBookingId());
+
+                if (!shuttle.getVehicleId().equals(storedRide.getAssignedVehicleId())) return;
+
+                storedRide.setStatus(currentRide.getStatus());
                 
                 if (currentRide.getStatus() == Ride.Status.PICKED_UP && storedRide.getPickupTime() == 0) {
                     storedRide.setPickupTime(getOs().getSimulationTime());
                     onVehicleRidePickup(storedRide);
-                }
-
-                if (currentRide.getStatus() == Ride.Status.DROPPED_OFF && storedRide.getDropOffTime() == 0) {
-                    // Remove ride from vehicle's list of current rides
-                    registeredShuttles.get(currentRide.getAssignedVehicleId()).getCurrentRides().remove(currentRide);
-
-                    // Log dropoff time in dispatcher's list
-                    storedRide.setDropOffTime(getOs().getSimulationTime());
-                    onVehicleRideDropoff(storedRide);
-                    getLog().infoSimTime(this, "Vehicle {} completed ride booking {}.", storedRide.getAssignedVehicleId(), storedRide.getBookingId());
                 }
             });
         }
