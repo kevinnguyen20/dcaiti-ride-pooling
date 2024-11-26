@@ -1,11 +1,11 @@
 package com.dcaiti.mosaic.app.ridehailing.heuristics;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.stream.Collectors;
 
 import org.eclipse.mosaic.fed.application.ambassador.SimulationKernel;
 import org.eclipse.mosaic.lib.geo.CartesianPoint;
@@ -45,10 +45,10 @@ public class RestrictedSubgraphMatching extends AbstractHeuristics {
         currentStops = stops;
         currentRoutes = routes;
 
-        if(!init) {
-            registeredShuttles.values().forEach(shuttle -> 
-                shuttle.setVehicleCapacity(VEHICLE_CAPACITY));
-        }
+        // TODO: Still manually setting vehicle capacities
+        if (!init) registeredShuttles.values().forEach(shuttle -> 
+            shuttle.setVehicleCapacity(VEHICLE_CAPACITY)
+        );
 
         // Reset lists of vehicles for reassignment
         vehicleEnroute = new LinkedList<>();
@@ -56,11 +56,9 @@ public class RestrictedSubgraphMatching extends AbstractHeuristics {
 
         // Create lists of idle vehicles and vehicles en route
         registeredShuttles.values().forEach(shuttle -> {
-            if (shuttle.hasEnoughCapacity() 
-                && shuttle.getCurrentRides().size() > 0) 
-                vehicleEnroute.add(shuttle);
+            if (shuttle.hasEnoughCapacity() && !shuttle.getCurrentRides().isEmpty()) vehicleEnroute.add(shuttle);
 
-            else if (shuttle.getCurrentRides().size() == 0) 
+            else if (shuttle.getCurrentRides().isEmpty()) 
                 vehicleIdle.add(shuttle);
         });
 
@@ -76,11 +74,12 @@ public class RestrictedSubgraphMatching extends AbstractHeuristics {
                 CartesianPoint shuttleOrigin = getCartesianPoint(currentRide.getPickupLocation());
                 CartesianPoint shuttleDestination = getCartesianPoint(currentRide.getDropoffLocation());
 
-                IRoadPosition shuttlePosition = SimulationKernel.SimulationKernel.getCentralNavigationComponent().getRouting().findClosestRoadPosition(shuttle.getCurrentPosition());
-                // Set IRoadPosition for pickup location
-                addPositionOnRoad(pickup, shuttlePosition);
-                // set IRoadPosition for dropoff location
-                addPositionOnRoad(dropoff, shuttlePosition);
+                // Determine the shuttle position on the road
+                IRoadPosition shuttlePositionOnRoad = getClosestRoadPosition(shuttle.getCurrentPosition());
+
+                // Set road positions for upcoming stops
+                addPositionOnRoad(pickup, shuttlePositionOnRoad);
+                addPositionOnRoad(dropoff, shuttlePositionOnRoad);
                 CartesianPoint passengerOrigin = getCartesianPoint(pickup);
                 CartesianPoint passengerDestination = getCartesianPoint(dropoff);
 
@@ -97,15 +96,23 @@ public class RestrictedSubgraphMatching extends AbstractHeuristics {
                 };
             });
 
-            if (candidateShuttle == null && vehicleIdle.size() > 0) {
+            // Assign idle vehicle to passenger
+            if (candidateShuttle == null && !vehicleIdle.isEmpty()) {
                 VehicleStatus candidateShuttleIdle = vehicleIdle.stream()
                     .min(Comparator.comparingDouble(shuttle -> getDistanceToIdleShuttle(pickup, shuttle.getCurrentPosition())))
                     .orElse(null);
 
-                assignBookingToIdleShuttle(passenger, candidateShuttleIdle);
-                vehicleIdle.removeIf(shuttle -> shuttle.getVehicleId().equals(candidateShuttleIdle.getVehicleId()));
+                if (candidateShuttleIdle != null) {
+                    assignBookingToIdleShuttle(passenger, candidateShuttleIdle);
+                    vehicleIdle.removeIf(shuttle -> shuttle.getVehicleId().equals(candidateShuttleIdle.getVehicleId()));
+                } else passenger.setStatus(Ride.Status.DECLINED);
             } else {
+                // Remove full shuttle from list of enroute vehicles
                 if (!vehicleEnroute.isEmpty() && candidateShuttle != null) vehicleEnroute.removeIf(shuttle -> shuttle.getVehicleId().equals(candidateShuttle.getVehicleId()));
+
+                if (passenger.getAssignedVehicleId() == null) {
+                    passenger.setStatus(Ride.Status.DECLINED);
+                }
             }
         });
     }
@@ -121,13 +128,15 @@ public class RestrictedSubgraphMatching extends AbstractHeuristics {
     private static void assignBookingToShuttleEnroute(Ride passenger, VehicleStatus shuttle) {
         String shuttleId = shuttle.getVehicleId();
 
+        // Init rides, stops, and routes
         allRides.putIfAbsent(shuttleId, new LinkedList<>());
-        // Erase historic stops and routes
         eraseHistoricStopsAndRoutes(shuttleId);
 
+        // Update ride status
         passenger.setAssignedVehicleId(shuttle.getVehicleId());
         passenger.setStatus(Ride.Status.ASSIGNED);
 
+        // Update rides, stops, and routes
         allRides.get(shuttleId).add(passenger);
         stopOrder(passenger, shuttle);
         updateRoutes(shuttle);
@@ -140,63 +149,44 @@ public class RestrictedSubgraphMatching extends AbstractHeuristics {
         CartesianPoint passengerOrigin = getCartesianPoint(passenger.getPickupLocation());
         CartesianPoint passengerDestination = getCartesianPoint(passenger.getDropoffLocation());
 
-        List<CartesianPoint> result = new LinkedList<>();
-        List<CartesianPoint> tmp = new LinkedList<>();
+        List<CartesianPoint> result = new ArrayList<>();
         double minDistance = Double.MAX_VALUE;
 
-        if (currentRide.getStatus() == Ride.Status.ASSIGNED) {
-            for (int i = 0; i < 3; i++) {
-                for (int j = i; j < 3; j++) {
-                    tmp.add(rideOrigin);
-                    tmp.add(rideDestination);
-                    tmp.add(i, passengerOrigin);
-                    tmp.add(j + 1, passengerDestination);
-                    double distance = getTotalDistance(tmp);
-                    if (distance < minDistance) {
-                        minDistance = distance;
-                        result = tmp.stream().collect(Collectors.toList());
-                    }
-                    tmp = new LinkedList<>();
+        // Differentiation between ASSIGNED and PICKED_UP
+        // First stop either shuttle's current position or a ride's origin
+        List<CartesianPoint> initialPoints = currentRide.getStatus() == Ride.Status.PICKED_UP
+            ? List.of(centerOf(getClosestRoadPosition(shuttle.getCurrentPosition()).getConnection()).toCartesian(), rideDestination)
+            : List.of(rideOrigin, rideDestination);
+
+        int limit = currentRide.getStatus() == Ride.Status.PICKED_UP ? 2 : 3;
+
+        // Get the order of stops with minimum total distance
+        for (int i = 0; i < limit; i++) {
+            for (int j = i; j < limit; j++) {
+                List<CartesianPoint> tmp = new ArrayList<>(initialPoints);
+                tmp.add(i, passengerOrigin);
+                tmp.add(j + 1, passengerDestination);
+
+                double distance = getTotalDistance(tmp);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    result = new ArrayList<>(tmp);
                 }
-            }
-
-            convertToVehicleStops(result, currentRide, passenger, shuttle);
-
-        } else if (currentRide.getStatus() == Ride.Status.PICKED_UP) {
-            IRoadPosition shuttlePositionOnRoad = SimulationKernel.SimulationKernel.getCentralNavigationComponent().getRouting().findClosestRoadPosition(shuttle.getCurrentPosition());
-
-            CartesianPoint shuttleCartesian = centerOf(shuttlePositionOnRoad.getConnection()).toCartesian();
-
-            for (int i = 0; i < 2; i++) {
-                for (int j = i; j < 2; j++) {
-                    tmp.add(rideDestination);
-                    tmp.add(i, passengerOrigin);
-                    tmp.add(j + 1, passengerDestination);
-                    tmp.add(0, shuttleCartesian);
-                    double distance = getTotalDistance(tmp);
-                    if (distance < minDistance) {
-                        minDistance = distance;
-                        result = tmp.stream().collect(Collectors.toList());
-                    }
-                    tmp = new LinkedList<>();
-                }
-            }
-
-            result.remove(0);
-            Queue<VehicleStop> stops = currentStops.get(shuttle.getVehicleId());
-            for (CartesianPoint point : result) {
-                if (point.equals(getCartesianPoint(currentRide.getDropoffLocation())))
-                    stops.add(currentRide.getDropoffLocation());
-                else if (point.equals(getCartesianPoint(passenger.getPickupLocation())))
-                    stops.add(passenger.getPickupLocation());
-                else if (point.equals(getCartesianPoint(passenger.getDropoffLocation())))
-                    stops.add(passenger.getDropoffLocation());
             }
         }
+
+        // Remove the shuttle position if already picked up
+        if (currentRide.getStatus() == Ride.Status.PICKED_UP) result.remove(0);
+
+        // Convert Cartesian points into stops
+        convertToVehicleStops(result, currentRide, passenger, shuttle);
     }
 
     private static double getDistanceToIdleShuttle(VehicleStop pickup, GeoPoint shuttlePosition) {
-        IRoadPosition shuttlePositionOnRoad = SimulationKernel.SimulationKernel.getCentralNavigationComponent().getRouting().findClosestRoadPosition(shuttlePosition);
+        // Determine the shuttle position on the road
+        IRoadPosition shuttlePositionOnRoad = getClosestRoadPosition(shuttlePosition);
+
+        // Set road positions for upcoming stops
         addPositionOnRoad(pickup, shuttlePositionOnRoad);
         
         return distance(
@@ -215,17 +205,19 @@ public class RestrictedSubgraphMatching extends AbstractHeuristics {
     }
 
     private static void convertToVehicleStops(List<CartesianPoint> points, Ride currentRide, Ride passenger, VehicleStatus shuttle) {
-        for (CartesianPoint point : points) {
-            if (point.equals(getCartesianPoint(currentRide.getPickupLocation()))) {
-                currentStops.get(shuttle.getVehicleId()).add(currentRide.getPickupLocation());
-            } else if (point.equals(getCartesianPoint(currentRide.getDropoffLocation()))) {
-                currentStops.get(shuttle.getVehicleId()).add(currentRide.getDropoffLocation());
-            } else if (point.equals(getCartesianPoint(passenger.getPickupLocation()))) {
-                currentStops.get(shuttle.getVehicleId()).add(passenger.getPickupLocation());
-            } else if (point.equals(getCartesianPoint(passenger.getDropoffLocation()))) {
-                currentStops.get(shuttle.getVehicleId()).add(passenger.getDropoffLocation());
-            }
-        }
+        String shuttleId = shuttle.getVehicleId();
+        Queue<VehicleStop> stops = currentStops.get(shuttleId);
+    
+        Map<CartesianPoint, VehicleStop> tmp = Map.of(
+            getCartesianPoint(currentRide.getPickupLocation()), currentRide.getPickupLocation(),
+            getCartesianPoint(currentRide.getDropoffLocation()), currentRide.getDropoffLocation(),
+            getCartesianPoint(passenger.getPickupLocation()), passenger.getPickupLocation(),
+            getCartesianPoint(passenger.getDropoffLocation()), passenger.getDropoffLocation()
+        );
+    
+        points.forEach(point -> {
+            if (tmp.containsKey(point)) stops.add(tmp.get(point));
+        });
     }
 
     private static CartesianPoint getCartesianPoint(VehicleStop position) {
@@ -235,16 +227,19 @@ public class RestrictedSubgraphMatching extends AbstractHeuristics {
     private static void assignBookingToIdleShuttle(Ride passenger, VehicleStatus shuttle) {
         String shuttleId = shuttle.getVehicleId();
 
+        // Init rides, stops, and routes
         allRides.putIfAbsent(shuttleId, new LinkedList<>());
-        // Erase historic stops and routes
         eraseHistoricStopsAndRoutes(shuttleId);
 
+        // Update ride status
         passenger.setAssignedVehicleId(shuttleId);
         passenger.setStatus(Ride.Status.ASSIGNED);
 
+        // Update ride, stop, and route information
         allRides.get(shuttleId).add(passenger);
-        currentStops.get(shuttleId).add(passenger.getPickupLocation());
-        currentStops.get(shuttleId).add(passenger.getDropoffLocation());
+        Queue<VehicleStop> stops = currentStops.get(shuttleId);
+        stops.add(passenger.getPickupLocation());
+        stops.add(passenger.getDropoffLocation());
         updateRoutes(shuttle, passenger);
     }
 
@@ -254,14 +249,19 @@ public class RestrictedSubgraphMatching extends AbstractHeuristics {
     }
 
     private static void updateRoutes(VehicleStatus shuttle) {
-        IRoadPosition shuttlePositionOnRoad = SimulationKernel.SimulationKernel.getCentralNavigationComponent().getRouting().findClosestRoadPosition(shuttle.getCurrentPosition());
+        // Determine the shuttle position on the road
+        IRoadPosition shuttlePositionOnRoad = getClosestRoadPosition(shuttle.getCurrentPosition());
 
+        // Set road positions for upcoming stops
         Queue<VehicleStop> stops = currentStops.get(shuttle.getVehicleId());
         stops.forEach(stop -> addPositionOnRoad(stop, shuttlePositionOnRoad));
 
         List<VehicleStop> tmp = (LinkedList<VehicleStop>) stops;
+
+        // Add the first route from shuttle to the first stop
         currentRoutes.get(shuttle.getVehicleId()).add(getBestRoute(shuttlePositionOnRoad, tmp.get(0).getPositionOnRoad()));
 
+        // Add the routes between upcoming stops
         for (int i = 0; i < stops.size() - 1; i++) {
             CandidateRoute c = getBestRoute(tmp.get(i).getPositionOnRoad(), tmp.get(i + 1).getPositionOnRoad());
             currentRoutes.get(shuttle.getVehicleId()).add(c);
@@ -269,14 +269,23 @@ public class RestrictedSubgraphMatching extends AbstractHeuristics {
     }
 
     private static void updateRoutes(VehicleStatus shuttle, Ride passenger) {
-        IRoadPosition shuttlePositionOnRoad = SimulationKernel.SimulationKernel.getCentralNavigationComponent().getRouting().findClosestRoadPosition(shuttle.getCurrentPosition());
+        // Determine the shuttle position on the road
+        IRoadPosition shuttlePositionOnRoad = getClosestRoadPosition(shuttle.getCurrentPosition());
 
+        // Set road positions for upcoming stops
         addPositionOnRoad(passenger.getPickupLocation(), shuttlePositionOnRoad);
         addPositionOnRoad(passenger.getDropoffLocation(), shuttlePositionOnRoad);
         IRoadPosition pickup = passenger.getPickupLocation().getPositionOnRoad();
         IRoadPosition dropoff = passenger.getDropoffLocation().getPositionOnRoad();
-        
+
+        // Update routes
         currentRoutes.get(shuttle.getVehicleId()).add(getBestRoute(shuttlePositionOnRoad, pickup));
         currentRoutes.get(shuttle.getVehicleId()).add(getBestRoute(pickup, dropoff));
+    }
+
+    private static IRoadPosition getClosestRoadPosition(GeoPoint position) {
+        return SimulationKernel.SimulationKernel.getCentralNavigationComponent()
+            .getRouting()
+            .findClosestRoadPosition(position);
     }
 }
