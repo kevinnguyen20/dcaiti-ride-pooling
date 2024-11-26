@@ -126,20 +126,9 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
     }
 
     private void driveToPointOfBusiness() {
-        // RoutingPosition target = new RoutingPosition(
-        //     centerOf(pointOfBusiness.getPositionOnRoad().getConnection()),
-        //     null,
-        //     pointOfBusiness.getPositionOnRoad().getConnectionId()
-        // );
-
-        // RoutingParameters routingParameters = new RoutingParameters()
-        //     .costFunction(RoutingCostFunction.Fastest)
-        //     .considerTurnCosts(considerTurnCosts);
-
-        // currentRoutes.add(
-        //     getOs().getNavigationModule().calculateRoutes(target, routingParameters).getBestRoute()
-        // );
-        currentRoutes.add(getNewCurrentRoute(pointOfBusiness.getPositionOnRoad().getConnection()));
+        currentRoutes.add(
+            getNewCurrentRoute(pointOfBusiness.getPositionOnRoad().getConnection())
+        );
     }
 
     private static GeoPoint centerOf(IConnection connection) {
@@ -211,15 +200,18 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
                 String targetConnectionId = route.getConnectionIds().get(route.getConnectionIds().size() - 1);
                 IConnection targetConnection = getOs().getNavigationModule().getConnection(targetConnectionId);
 
+                // Calculate new route and remove the old deprecated route
                 currentRoute = getNewCurrentRoute(targetConnection);
                 removeDeprecatedRoute();
 
+                // Revoke the current stop and switch to new route
                 getOs().stop(currentPlannedStop.getPositionOnRoad(), stopMode, 0);
                 getOs().getNavigationModule().switchRoute(currentRoute);
             } else getOs().getNavigationModule().switchRoute(route);
         }
     }
 
+    // Important: update routes first, then stops
     public void updateStops(Queue<VehicleStop> currentStops) {
         if (currentStops.isEmpty()) return;
 
