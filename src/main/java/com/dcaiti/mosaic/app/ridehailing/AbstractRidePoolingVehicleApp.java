@@ -66,6 +66,7 @@ public abstract class AbstractRidePoolingVehicleApp<ConfigT extends CAbstractRid
 
         getOs().getCellModule().sendV2xMessage(shuttleStatusMsg);
 
+        // Send an update to the server every five seconds
         getOs().getEventManager().addEvent(getOs().getSimulationTime() + UPDATE_INTERVAL, e -> sendUpdate());
     }
 
@@ -84,22 +85,17 @@ public abstract class AbstractRidePoolingVehicleApp<ConfigT extends CAbstractRid
             int rideId = rideStop.getRideStop().getRideId();
             VehicleStop.StopReason stopReason = rideStop.getRideStop().getStopReason();
 
-            allRides.parallelStream()
+            allRides.stream()
                 .filter(ride -> ride.getBookingId() == rideId)
                 .forEach(ride -> {
                     if (stopReason == VehicleStop.StopReason.PICK_UP) pickup(ride);
                     else if (stopReason == VehicleStop.StopReason.DROP_OFF) dropOff(ride);
-                    }
-                );
+                });
         }
     }
 
     protected void pickup(Ride ride) {
         ride.setStatus(Ride.Status.PICKED_UP);
-        // } else {
-        //     getLog().error("The stop has been declined (invalid dropoff location).");
-        //     ride.setStatus(Ride.Status.DECLINED);
-        // }
         onPickup(ride);
     }
 
@@ -108,59 +104,65 @@ public abstract class AbstractRidePoolingVehicleApp<ConfigT extends CAbstractRid
         onDropOff(ride);
     }
 
+    // Receive message upon new accepted ride
+    @Override
+    public void onMessageReceived(ReceivedV2xMessage receivedV2xMessage) {
+        if (!(receivedV2xMessage.getMessage() instanceof RideBookingMessage rideBookingMessage)) return;
+
+        // Ride bookign message targeted the wrong shuttle
+        if (!rideBookingMessage.getTargetVehicle().equals(getOs().getId())) {
+            getLog().warn("Ignoring ride booking for another vehicle.");
+            return;
+        }
+
+        // Update ride, stop, and route information
+        allRides = rideBookingMessage.getAllRides();
+        currentStops = rideBookingMessage.getCurrentStops();
+        currentRoutes = rideBookingMessage.getCurrentRoutes();
+        declinedRides = new LinkedList<>();
+        finishedRides = new LinkedList<>();
+
+        // Process rides
+        allRides.stream()
+            .filter(ride -> ride.getAssignedVehicleId().equals(getOs().getId()))
+            .forEach(ride -> processRide(ride));
+
+        // Update routes and stops if no rides were declined
+        if (declinedRides.isEmpty()) {
+            VehicleApp vehicleApp = getVehicleApp();
+            // Important: update routes first
+            vehicleApp.updateRoutes(currentRoutes);
+            vehicleApp.updateStops(currentStops);
+        }
+    }
+
+    private void processRide(Ride ride) {
+        switch (ride.getStatus()) {
+            case DROPPED_OFF, DECLINED, REJECTED -> {}
+            case ASSIGNED -> {
+                if (currentRides.size() >= VEHICLE_CAPACITY) {
+                    declineRide(ride);
+                } else {
+                    onAcceptRide(ride);
+                }
+            }
+            default -> throw new IllegalArgumentException("Unexpected value: " + ride.getStatus());
+        }
+    }    
+
+    private void declineRide(Ride ride) {
+        getLog().warn("Shuttle's capacity reached. Declining ride.");
+        ride.setStatus(Ride.Status.DECLINED);
+        declinedRides.add(ride);
+        System.err.println("Ride declined");
+        System.err.println();
+    }
+
     protected final @NonNull VehicleApp getVehicleApp() {
         return (VehicleApp) getOs().getApplications().parallelStream()
             .filter(app -> app instanceof VehicleApp)
             .findFirst()
             .orElseThrow(() -> new IllegalStateException("This app requires MultiStopApp to be mapped"));
-    }
-
-    // Receive message upon new accepted ride
-    @Override
-    public void onMessageReceived(ReceivedV2xMessage receivedV2xMessage) {
-        if (receivedV2xMessage.getMessage() instanceof RideBookingMessage rideBookingMessage) {
-            // Ride booking message targeted the wrong shuttle
-            if (!rideBookingMessage.getTargetVehicle().equals(getOs().getId())) {
-                getLog().warn("Ignoring ride booking for another vehicle.");
-                return;
-            }
-
-            // Update information
-            allRides = rideBookingMessage.getAllRides();
-            currentStops = rideBookingMessage.getCurrentStops();
-            currentRoutes = rideBookingMessage.getCurrentRoutes();
-            declinedRides = new LinkedList<>();
-            finishedRides = new LinkedList<>();
-
-            allRides.parallelStream().filter(ride -> ride.getAssignedVehicleId().equals(getOs().getId())).forEach(ride -> {
-                switch (ride.getStatus()) {
-                    case DROPPED_OFF, REJECTED -> {}
-                    case ASSIGNED -> {
-                        // Decline rides if capacity is reached
-                        if (currentRides.size() >= VEHICLE_CAPACITY) {
-                            getLog().warn("Shuttle's capacity reached.");
-                            ride.setStatus(Ride.Status.DECLINED);
-                            declinedRides.add(ride);
-                            System.err.println();
-                            System.err.println("Ride declined.");
-                        } else {
-                            // Add accepted rides to currentRides
-                            onAcceptRide(ride);
-                            System.err.println();
-                            System.err.println("Accepted ride: "+ride.getBookingId());
-                            System.err.println();
-                        }
-                    }
-                    default -> throw new IllegalArgumentException("Unexpected value: " + ride.getStatus());
-                }
-            });
-            if (declinedRides.isEmpty()) {
-                VehicleApp vehicleApp = getVehicleApp();
-                // IMPORTANT: UPDATE ROUTES FIRST, THEN STOPS
-                vehicleApp.updateRoutes(currentRoutes);
-                vehicleApp.updateStops(currentStops);
-            }
-        }
     }
 
     @Override
