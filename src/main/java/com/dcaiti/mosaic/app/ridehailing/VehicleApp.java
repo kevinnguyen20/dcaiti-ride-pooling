@@ -28,8 +28,6 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 
 public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOperatingSystem> implements VehicleApplication {
 
-    private static final boolean TURN_COSTS = false;
-
     private static long minStopTime;
     private static long maxStopTime;
     private static VehicleStopMode stopMode;
@@ -74,16 +72,16 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
         }
 
         // Log timestamp when vehicle waits for the first time
-        if ((previousVehicleData != null && !previousVehicleData.isStopped()) && updatedVehicleData.isStopped()) lastStoppedAt = getOs().getSimulationTime();
+        if (previousVehicleData != null && !previousVehicleData.isStopped() && updatedVehicleData.isStopped()) lastStoppedAt = getOs().getSimulationTime();
 
         // If waiting for new requests, continue waiting
         // if (waitingForResume) return;
 
-        // Return to point-of-business if the list of stops is empty
-        if (waitingForResume && currentStops.isEmpty()) {
-            if (waitingAtPointOfBusiness) return;
+        // Return to point-of-business if idle
+        if (waitingForResume && currentStops.isEmpty() && !waitingAtPointOfBusiness) {
             currentPlannedStop = pointOfBusiness;
             currentStops.add(pointOfBusiness);
+            driveToFirstStop = true;
             driveToPointOfBusiness();
         }
 
@@ -94,7 +92,7 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
         //     driveToFirstStop = true;
         // }
 
-        // Vehicle on the way to first stop but new order arrives
+        // Handle arrival at first stop if new orders are present
         if (driveToFirstStop && !currentStops.isEmpty()) {
             driveToNextStop();
             driveToFirstStop = false;
@@ -106,8 +104,7 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
             currentRoutes.poll();
             notifyOtherApps(currentPlannedStop);
 
-            if (currentPlannedStop.getGeoPoint() == pointOfBusiness.getGeoPoint()) waitingAtPointOfBusiness = true;
-
+            waitingAtPointOfBusiness = currentPlannedStop.getGeoPoint().equals(pointOfBusiness.getGeoPoint());
             currentPlannedStop = null;
             waitingForResume = true;
 
@@ -129,14 +126,20 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
     }
 
     private void driveToPointOfBusiness() {
-        final RoutingPosition target = new RoutingPosition(centerOf(pointOfBusiness.getPositionOnRoad().getConnection()), null, pointOfBusiness.getPositionOnRoad().getConnectionId());
+        // RoutingPosition target = new RoutingPosition(
+        //     centerOf(pointOfBusiness.getPositionOnRoad().getConnection()),
+        //     null,
+        //     pointOfBusiness.getPositionOnRoad().getConnectionId()
+        // );
 
-        final RoutingParameters routingParameters = new RoutingParameters()
-            .costFunction(RoutingCostFunction.Fastest)
-            .considerTurnCosts(considerTurnCosts);
+        // RoutingParameters routingParameters = new RoutingParameters()
+        //     .costFunction(RoutingCostFunction.Fastest)
+        //     .considerTurnCosts(considerTurnCosts);
 
-        final CandidateRoute bestRoute = getOs().getNavigationModule().calculateRoutes(target, routingParameters).getBestRoute();
-        currentRoutes.add(bestRoute);
+        // currentRoutes.add(
+        //     getOs().getNavigationModule().calculateRoutes(target, routingParameters).getBestRoute()
+        // );
+        currentRoutes.add(getNewCurrentRoute(pointOfBusiness.getPositionOnRoad().getConnection()));
     }
 
     private static GeoPoint centerOf(IConnection connection) {
@@ -154,21 +157,20 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
     }
 
     private boolean hasReachedStop(VehicleStop stopPosition) {
-        if (stopPosition == null) return false;
-
-        return getOs().getVehicleData().isStopped()
+        return stopPosition != null 
+            && getOs().getVehicleData().isStopped()
             && hasReachedStopPosition(stopPosition)
             && isWaitingTimeReached(stopPosition);
     }
 
     private boolean isWaitingTimeReached(VehicleStop stopPosition) {
-        boolean needToWait = getConfiguration().waitUntilDropOffTime;
-
-        if (needToWait && 
-            (stopPosition.getStopReason() == VehicleStop.StopReason.DROP_OFF || 
-            stopPosition.getStopReason() == VehicleStop.StopReason.PICK_UP)) return Math.min(stopPosition.getWaitUntil(), lastStoppedAt + maxStopTime) <= getOs().getSimulationTime();
-
-        return true;
+        if (!getConfiguration().waitUntilDropOffTime) return true;
+    
+        boolean isDropOffOrPickUp = stopPosition.getStopReason() == VehicleStop.StopReason.DROP_OFF 
+            || stopPosition.getStopReason() == VehicleStop.StopReason.PICK_UP;
+    
+        // Stop reasons different from DROPPED_OFF AND PICK_UP always true
+        return !isDropOffOrPickUp || Math.min(stopPosition.getWaitUntil(), lastStoppedAt + maxStopTime) <= getOs().getSimulationTime();
     }
 
     private boolean hasReachedStopPosition(VehicleStop stopPosition) {
@@ -189,38 +191,59 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
         
         currentPlannedStop = currentStops.peek();
         currentRoute = currentRoutes.peek();
+
+        getOs().stop(currentPlannedStop.getPositionOnRoad(), stopMode, 0);
         getOs().getNavigationModule().switchRoute(currentRoute);
         getOs().stop(currentStops.peek().getPositionOnRoad(), stopMode, Long.MAX_VALUE);
     }
 
-    // TODO: check new stops and routes, temporal differences
-    public void updateStops(Queue<VehicleStop> currentStops) {
-        // No update if queue is empty
-        if (currentStops.size() == 0) return;
-        this.currentStops = currentStops;
-        if (currentPlannedStop != null) {
-            getOs().stop(currentPlannedStop.getPositionOnRoad(), stopMode, 0);
-            currentPlannedStop = currentStops.peek();
-            getOs().stop(currentPlannedStop.getPositionOnRoad(), stopMode, Long.MAX_VALUE);
+    // Important: update routes first, then stops
+    public void updateRoutes(Queue<CandidateRoute> routes) {
+        if (routes.isEmpty()) return;
+
+        currentRoutes = routes;
+        CandidateRoute route = currentRoutes.peek();
+        if (route != null) {
+            IRoadPosition shuttlePositionOnRoad = getOs().getVehicleData().getRoadPosition();
+            String currentConnectionId = shuttlePositionOnRoad.getConnectionId();
+
+            if (route.getConnectionIds().stream().noneMatch(connectionId -> connectionId.equals(currentConnectionId))) {
+                String targetConnectionId = route.getConnectionIds().get(route.getConnectionIds().size() - 1);
+                IConnection targetConnection = getOs().getNavigationModule().getConnection(targetConnectionId);
+
+                currentRoute = getNewCurrentRoute(targetConnection);
+                removeDeprecatedRoute();
+
+                getOs().stop(currentPlannedStop.getPositionOnRoad(), stopMode, 0);
+                getOs().getNavigationModule().switchRoute(currentRoute);
+            } else getOs().getNavigationModule().switchRoute(route);
         }
     }
 
-    public void updateRoutes(Queue<CandidateRoute> currentRoutes) {
-        // No update if queue is empty
-        if (currentRoutes.size() == 0) return;
-        this.currentRoutes = currentRoutes;
-        if (currentRoutes.peek() != null) {
-            IRoadPosition shuttlePositionOnRoad = getOs().getVehicleData().getRoadPosition();
-            if (!(currentRoutes.peek().getConnectionIds().parallelStream().filter(connectionId -> connectionId.equals(shuttlePositionOnRoad.getConnectionId())).findFirst().isPresent())) {
-                RoutingPosition target = new RoutingPosition(centerOf(currentPlannedStop.getPositionOnRoad().getConnection()), null, currentPlannedStop.getPositionOnRoad().getConnectionId());
-                RoutingParameters routingParameters = new RoutingParameters()
-                    .costFunction(RoutingCostFunction.Fastest)
-                    .considerTurnCosts(TURN_COSTS);
-                CandidateRoute newRoute = getOs().getNavigationModule().calculateRoutes(target, routingParameters).getBestRoute();
-                getOs().getNavigationModule().switchRoute(newRoute);
-            } else
-            getOs().getNavigationModule().switchRoute(currentRoutes.peek());
-        }
+    public void updateStops(Queue<VehicleStop> currentStops) {
+        if (currentStops.isEmpty()) return;
+
+        this.currentStops = currentStops;
+        if (currentPlannedStop == null) return;
+
+        currentPlannedStop = currentStops.peek();
+        getOs().stop(currentPlannedStop.getPositionOnRoad(), stopMode, Long.MAX_VALUE);
+    }
+
+    private void removeDeprecatedRoute() {
+        Queue<CandidateRoute> tmp = new LinkedList<>();
+        tmp.add(currentRoute);
+        currentRoutes.poll();
+        currentRoutes.forEach(r -> tmp.add(r));
+        currentRoutes = tmp;
+    }
+
+    private CandidateRoute getNewCurrentRoute(IConnection connection) {
+        RoutingPosition target = new RoutingPosition(centerOf(connection), null, connection.getId());
+        RoutingParameters routingParameters = new RoutingParameters()
+            .costFunction(RoutingCostFunction.Fastest)
+            .considerTurnCosts(considerTurnCosts);
+        return getOs().getNavigationModule().calculateRoutes(target, routingParameters).getBestRoute();
     }
 
     @Override
