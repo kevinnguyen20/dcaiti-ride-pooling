@@ -63,93 +63,88 @@ public abstract class AbstractRidePoolingServiceApp<ConfigT>
     private void checkPendingBookings() {
         if (isTornDown()) return;
 
-        // Fetching new ride bookings
+        // Fetch and store new ride bookings
         rideProvider.findNewRides(getOs().getSimulationTime())
             .forEach(booking -> storedRides.put(booking.getBookingId(), booking));
 
+        // Update statuses and collect new bookings
         List<Ride> newBookings = storedRides.values().parallelStream()
+            .peek(ride -> {
+                if (ride.getStatus() == Ride.Status.DECLINED) ride.setStatus(Ride.Status.PENDING);
+            })
             .filter(ride -> ride.getStatus() == Ride.Status.PENDING)
             .sorted(Comparator.comparingLong(Ride::getCreationTime))
             .toList();
         
+        // Assign new bookings to shuttles
         if (!newBookings.isEmpty()) assignBookingsToShuttles(newBookings);
 
+        // Notify shuttles of assigned bookings
         newBookings.stream()
             .filter(booking -> booking.getStatus() == Ride.Status.ASSIGNED)
             .forEach(booking -> {
                 String shuttleId = booking.getAssignedVehicleId();
                 getLog().infoSimTime(this, "Assigned ride booking {} to shuttle {}", booking.getBookingId(), shuttleId);
-
-                MessageRouting messageRouting = getOs().getCellModule().createMessageRouting().topoCast(shuttleId);
-                getOs().getCellModule().sendV2xMessage(new RideBookingMessage(
-                    messageRouting,
-                    shuttleId,
-                    rides.get(shuttleId),
-                    stops.get(shuttleId),
-                    routes.get(shuttleId)
-                ));
+                sendRideBookingMessage(shuttleId, booking);
             });
 
         // Check for new ride bookings every 10 seconds
         getOs().getEventManager().addEvent(getOs().getSimulationTime() + UPDATE_INTERVAL, e -> checkPendingBookings());
     }
- 
+
     @Override
     public void onMessageReceived(ReceivedV2xMessage receivedV2xMessage) {
-        if (receivedV2xMessage.getMessage() instanceof VehicleStatusMessage shuttleStatusMsg) {
-            // Update stored vehicle status
-            VehicleStatus shuttle = shuttleStatusMsg.getStatus();
-            registeredShuttles.put(shuttle.getVehicleId(), shuttle);
+        if (!(receivedV2xMessage.getMessage() instanceof VehicleStatusMessage shuttleStatusMsg)) return;
 
-            List<Ride> declinedRides = shuttleStatusMsg.getDeclinedRides();
-            if (!declinedRides.isEmpty()) {
-                declinedRides.forEach(declinedRide -> {
-                    Ride storedRide = storedRides.get(declinedRide.getBookingId());
-                    getLog().infoSimTime(this, "Shuttle {} declined ride booking {}", shuttle.getVehicleId(), declinedRide.getBookingId());
-                    storedRide.setStatus(Ride.Status.PENDING);
-                    storedRide.setPickupTime(0);
-                    storedRide.setDropOffTime(0);
-                    // TODO: add method handling rejected rides, e.g., limit
-                    // number of declinations
-                    storedRide.incrementNumberOfRejections();
-                    storedRide.setAssignedVehicleId(null);
-                });
+        VehicleStatus shuttle = shuttleStatusMsg.getStatus();
+        registeredShuttles.put(shuttle.getVehicleId(), shuttle);
+
+        // Declined rides
+        shuttleStatusMsg.getDeclinedRides().forEach(declinedRide -> {
+            Ride storedRide = storedRides.get(declinedRide.getBookingId());
+            getLog().infoSimTime(this, "Shuttle {} declined ride booking {}", shuttle.getVehicleId(), declinedRide.getBookingId());
+            storedRide.setStatus(Ride.Status.PENDING);
+            storedRide.setPickupTime(0);
+            storedRide.setDropOffTime(0);
+            storedRide.incrementNumberOfRejections();
+            storedRide.setAssignedVehicleId(null);
+        });
+
+        // Finished rides
+        shuttleStatusMsg.getFinishedRides().forEach(finishedRide -> {
+            Ride storedRide = storedRides.get(finishedRide.getBookingId());
+            getLog().infoSimTime(this, "Vehicle {} completed ride booking {}.", storedRide.getAssignedVehicleId(), storedRide.getBookingId());
+
+            if (finishedRide.getStatus() == Ride.Status.DROPPED_OFF && storedRide.getDropOffTime() == 0) {
+                storedRide.setStatus(finishedRide.getStatus());
+                registeredShuttles.get(shuttle.getVehicleId()).getCurrentRides().remove(finishedRide);
+                storedRide.setDropOffTime(getOs().getSimulationTime());
+                onVehicleRideDropoff(storedRide);
             }
+        });
 
-            List<Ride> finishedRides = shuttleStatusMsg.getFinishedRides();
-            if (!finishedRides.isEmpty()) {
-                finishedRides.forEach(finishedRide -> {
-                    Ride storedRide = storedRides.get(finishedRide.getBookingId());
-                    getLog().infoSimTime(this, "Vehicle {} completed ride booking {}.", storedRide.getAssignedVehicleId(), storedRide.getBookingId());
-                    if (finishedRide.getStatus() == Ride.Status.DROPPED_OFF && storedRide.getDropOffTime() == 0) {
-                        storedRide.setStatus(finishedRide.getStatus());
-                        // Remove ride from vehicle's list of current rides
-                        registeredShuttles.get(shuttle.getVehicleId()).getCurrentRides().remove(finishedRide);
-    
-                        // Log dropoff time in dispatcher's list
-                        storedRide.setDropOffTime(getOs().getSimulationTime());
-                        onVehicleRideDropoff(storedRide);
-                    }
-                });
+        // Current rides
+        shuttle.getCurrentRides().forEach(currentRide -> {
+            Ride storedRide = storedRides.get(currentRide.getBookingId());
+            if (!shuttle.getVehicleId().equals(storedRide.getAssignedVehicleId())) return;
+
+            storedRide.setStatus(currentRide.getStatus());
+            if (currentRide.getStatus() == Ride.Status.PICKED_UP && storedRide.getPickupTime() == 0) {
+                storedRide.setPickupTime(getOs().getSimulationTime());
+                onVehicleRidePickup(storedRide);
             }
+        });
+    }
 
-            // Update list of current rides
-            List<Ride> currentRides = shuttle.getCurrentRides();
-            if (currentRides.isEmpty()) return;
-
-            currentRides.forEach(currentRide -> {
-                Ride storedRide = storedRides.get(currentRide.getBookingId());
-
-                if (!shuttle.getVehicleId().equals(storedRide.getAssignedVehicleId())) return;
-
-                storedRide.setStatus(currentRide.getStatus());
-                
-                if (currentRide.getStatus() == Ride.Status.PICKED_UP && storedRide.getPickupTime() == 0) {
-                    storedRide.setPickupTime(getOs().getSimulationTime());
-                    onVehicleRidePickup(storedRide);
-                }
-            });
-        }
+    private void sendRideBookingMessage(String shuttleId, Ride booking) {
+        MessageRouting messageRouting = getOs().getCellModule().createMessageRouting().topoCast(shuttleId);
+        getOs().getCellModule().sendV2xMessage(new RideBookingMessage(
+            messageRouting,
+            shuttleId,
+            rides.get(shuttleId),
+            stops.get(shuttleId),
+            routes.get(shuttleId)
+        ));
     }
 
     @Override
