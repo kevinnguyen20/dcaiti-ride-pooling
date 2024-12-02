@@ -205,7 +205,7 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
                 removeDeprecatedRoute();
 
                 // Revoke the current stop and switch to new route
-                getOs().stop(currentPlannedStop.getPositionOnRoad(), stopMode, 0);
+                if (currentPlannedStop != null) getOs().stop(currentPlannedStop.getPositionOnRoad(), stopMode, 0);
                 getOs().getNavigationModule().switchRoute(currentRoute);
             } else getOs().getNavigationModule().switchRoute(route);
         }
