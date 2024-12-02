@@ -77,6 +77,10 @@ public class RestrictedSubgraphMatching extends AbstractHeuristics {
                 // Determine the shuttle position on the road
                 IRoadPosition shuttlePositionOnRoad = getClosestRoadPosition(shuttle.getCurrentPosition());
 
+                // If passenger is already picked up, set origin of current ride
+                // to the current shuttle position
+                if (currentRide.getStatus() == Ride.Status.PICKED_UP) shuttleOrigin = centerOf(shuttlePositionOnRoad.getConnection()).toCartesian();
+
                 // Set road positions for upcoming stops
                 addPositionOnRoad(pickup, shuttlePositionOnRoad);
                 addPositionOnRoad(dropoff, shuttlePositionOnRoad);
@@ -122,7 +126,8 @@ public class RestrictedSubgraphMatching extends AbstractHeuristics {
         double distanceToDropoff = distance(dropoff, testPoint);
         double distanceTrip = distance(pickup, dropoff);
         
-        return distanceToPickup + distanceToDropoff <= distanceTrip + 2 * Math.sqrt(distanceTrip);
+        // Convert meter to kilometer
+        return distanceToPickup + distanceToDropoff <= distanceTrip + (Math.sqrt(distanceTrip / 1000.0) * 1000);
     }
 
     private static void assignBookingToShuttleEnroute(Ride passenger, VehicleStatus shuttle) {
@@ -158,11 +163,11 @@ public class RestrictedSubgraphMatching extends AbstractHeuristics {
             ? List.of(centerOf(getClosestRoadPosition(shuttle.getCurrentPosition()).getConnection()).toCartesian(), rideDestination)
             : List.of(rideOrigin, rideDestination);
 
-        int limit = currentRide.getStatus() == Ride.Status.PICKED_UP ? 2 : 3;
+        int start = currentRide.getStatus() == Ride.Status.PICKED_UP ? 1 : 0;
 
         // Get the order of stops with minimum total distance
-        for (int i = 0; i < limit; i++) {
-            for (int j = i; j < limit; j++) {
+        for (int i = start; i < 3; i++) {
+            for (int j = i; j < 3; j++) {
                 List<CartesianPoint> tmp = new ArrayList<>(initialPoints);
                 tmp.add(i, passengerOrigin);
                 tmp.add(j + 1, passengerDestination);

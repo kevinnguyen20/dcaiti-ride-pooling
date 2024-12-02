@@ -119,8 +119,6 @@ public abstract class AbstractRidePoolingVehicleApp<ConfigT extends CAbstractRid
         allRides = rideBookingMessage.getAllRides();
         currentStops = rideBookingMessage.getCurrentStops();
         currentRoutes = rideBookingMessage.getCurrentRoutes();
-        declinedRides = new LinkedList<>();
-        finishedRides = new LinkedList<>();
 
         // Process rides
         allRides.stream()
@@ -138,7 +136,7 @@ public abstract class AbstractRidePoolingVehicleApp<ConfigT extends CAbstractRid
 
     private void processRide(Ride ride) {
         switch (ride.getStatus()) {
-            case DROPPED_OFF, DECLINED, REJECTED -> {}
+            case DROPPED_OFF, DECLINED, REJECTED, PICKED_UP -> {}
             case ASSIGNED -> {
                 if (currentRides.size() >= VEHICLE_CAPACITY) {
                     declineRide(ride);
