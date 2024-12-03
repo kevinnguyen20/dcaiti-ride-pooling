@@ -28,8 +28,8 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 
 public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOperatingSystem> implements VehicleApplication {
 
-    private static long minStopTime;
-    private static long maxStopTime;
+    private static long MIN_STOP_TIME;
+    private static long MAX_STOP_TIME;
     private static VehicleStopMode stopMode;
     private static boolean considerTurnCosts;
 
@@ -51,8 +51,8 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
 
     @Override
     public void onStartup() {
-        minStopTime = getConfiguration().stopTime;
-        maxStopTime = getConfiguration().maxStopTime;
+        MIN_STOP_TIME = getConfiguration().stopTime;
+        MAX_STOP_TIME = getConfiguration().maxStopTime;
         stopMode = getConfiguration().stopMode;
         considerTurnCosts = getConfiguration().considerTurnCosts;
 
@@ -109,7 +109,7 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
             waitingForResume = true;
 
             // Wait 20 seconds and resume
-            getOs().getEventManager().addEvent(getOs().getSimulationTime() + minStopTime, e -> driveToNextStop());
+            getOs().getEventManager().addEvent(getOs().getSimulationTime() + MIN_STOP_TIME, e -> driveToNextStop());
         }
     }
 
@@ -121,6 +121,9 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
             100
         );
         pointOfBusiness = new VehicleStop(initialStopPosition, VehicleStop.StopReason.WAITING);
+
+        // Wait at POB if no requests exist
+        pointOfBusiness.setWaitUntil(Long.MAX_VALUE);
         currentPlannedStop = pointOfBusiness;
         currentStops.add(pointOfBusiness);
     }
@@ -152,14 +155,15 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
             && isWaitingTimeReached(stopPosition);
     }
 
+    // TODO
     private boolean isWaitingTimeReached(VehicleStop stopPosition) {
         if (!getConfiguration().waitUntilDropOffTime) return true;
     
+        // Future use of randomization
         boolean isDropOffOrPickUp = stopPosition.getStopReason() == VehicleStop.StopReason.DROP_OFF 
             || stopPosition.getStopReason() == VehicleStop.StopReason.PICK_UP;
-    
-        // Stop reasons different from DROPPED_OFF AND PICK_UP always true
-        return !isDropOffOrPickUp || Math.min(stopPosition.getWaitUntil(), lastStoppedAt + maxStopTime) <= getOs().getSimulationTime();
+           
+        return Math.min(stopPosition.getWaitUntil(), lastStoppedAt + MAX_STOP_TIME) <= getOs().getSimulationTime();
     }
 
     private boolean hasReachedStopPosition(VehicleStop stopPosition) {
@@ -168,7 +172,7 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
 
     public void driveToNextStop() {
         if (currentStops.isEmpty()) {
-            getOs().getEventManager().addEvent(getOs().getSimulationTime() + minStopTime, e -> driveToNextStop());
+            getOs().getEventManager().addEvent(getOs().getSimulationTime() + MIN_STOP_TIME, e -> driveToNextStop());
             return;
         }
 
@@ -177,13 +181,14 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
             waitingAtPointOfBusiness = false;
             waitingForResume = false;
         }
-        
-        currentPlannedStop = currentStops.peek();
-        currentRoute = currentRoutes.peek();
 
-        getOs().stop(currentPlannedStop.getPositionOnRoad(), stopMode, 0);
+        // Cancel current stop
+        if (currentPlannedStop != null) getOs().stop(currentPlannedStop.getPositionOnRoad(), stopMode, 0);
+
+        currentRoute = currentRoutes.peek();
         getOs().getNavigationModule().switchRoute(currentRoute);
-        getOs().stop(currentStops.peek().getPositionOnRoad(), stopMode, Long.MAX_VALUE);
+        currentPlannedStop = currentStops.peek();
+        getOs().stop(currentPlannedStop.getPositionOnRoad(), stopMode, Long.MAX_VALUE);
     }
 
     // Important: update routes first, then stops
@@ -206,8 +211,9 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
 
                 // Revoke the current stop and switch to new route
                 if (currentPlannedStop != null) getOs().stop(currentPlannedStop.getPositionOnRoad(), stopMode, 0);
-                getOs().getNavigationModule().switchRoute(currentRoute);
-            } else getOs().getNavigationModule().switchRoute(route);
+            } else currentRoute = route;
+            
+            getOs().getNavigationModule().switchRoute(currentRoute);
         }
     }
 
@@ -218,6 +224,7 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
         this.currentStops = currentStops;
         if (currentPlannedStop == null) return;
 
+        if (currentPlannedStop != null) getOs().stop(currentPlannedStop.getPositionOnRoad(), stopMode, 0);
         currentPlannedStop = currentStops.peek();
         getOs().stop(currentPlannedStop.getPositionOnRoad(), stopMode, Long.MAX_VALUE);
     }
