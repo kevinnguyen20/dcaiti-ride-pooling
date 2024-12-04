@@ -205,7 +205,7 @@ public class RestrictedSubgraphMatching extends AbstractHeuristics {
             + distance(result.get(2), result.get(3));
     }
 
-    private static double distance(CartesianPoint p1, CartesianPoint p2) {
+    protected static double distance(CartesianPoint p1, CartesianPoint p2) {
         return Math.sqrt(Math.pow(p2.getX() - p1.getX(), 2) + Math.pow(p2.getY() - p1.getY(), 2));
     }
 
