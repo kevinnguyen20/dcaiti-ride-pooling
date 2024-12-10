@@ -134,10 +134,6 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
         );
     }
 
-    private static GeoPoint centerOf(IConnection connection) {
-        return GeoUtils.getPointBetween(connection.getStartNode().getPosition(), connection.getEndNode().getPosition());
-    }
-
     private void notifyOtherApps(VehicleStop rideStop) {
         getOs().getApplications().forEach(app -> {
             getOs().getEventManager().addEvent(new StopEvent(
@@ -170,7 +166,7 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
         return stopPosition.getPositionOnRoad().getConnectionId().equals(getOs().getRoadPosition().getConnectionId());
     }
 
-    public void driveToNextStop() {
+    private void driveToNextStop() {
         if (currentStops.isEmpty()) {
             getOs().getEventManager().addEvent(getOs().getSimulationTime() + MIN_STOP_TIME, e -> driveToNextStop());
             return;
@@ -243,6 +239,10 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
             .costFunction(RoutingCostFunction.Fastest)
             .considerTurnCosts(considerTurnCosts);
         return getOs().getNavigationModule().calculateRoutes(target, routingParameters).getBestRoute();
+    }
+
+    private static GeoPoint centerOf(IConnection connection) {
+        return GeoUtils.getPointBetween(connection.getStartNode().getPosition(), connection.getEndNode().getPosition());
     }
 
     @Override
