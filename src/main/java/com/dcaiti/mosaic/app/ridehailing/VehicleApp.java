@@ -250,14 +250,4 @@ public class VehicleApp extends ConfigurableApplication<CVehicleApp, VehicleOper
 
     @Override
     public void processEvent(Event event) {}
-
-    // TODO
-    // public void cancelStop(VehicleStop stopToCancel) {
-    //     upcomingStops.remove(stopToCancel);
-    //     if (currentPlannedStop == stopToCancel) {
-    //         getOs().stop(currentPlannedStop.getPositionOnRoad(), stopMode, 0);
-    //         currentPlannedStop = null;
-    //         // driveToNextStop();
-    //     }
-    // }
 }
