@@ -19,6 +19,7 @@ import org.eclipse.mosaic.rti.TIME;
 import com.dcaiti.mosaic.app.ridehailing.config.CAbstractRidePoolingVehicleApp;
 import com.dcaiti.mosaic.app.ridehailing.messages.RideBookingMessage;
 import com.dcaiti.mosaic.app.ridehailing.messages.VehicleStatusMessage;
+import com.dcaiti.mosaic.app.ridehailing.rebalancing.ReturningToPointOfBusinessVehicleApp;
 import com.dcaiti.mosaic.app.ridehailing.server.Ride;
 import com.dcaiti.mosaic.app.ridehailing.server.VehicleStatus;
 import com.dcaiti.mosaic.app.ridehailing.vehicle.StopEvent;
@@ -127,7 +128,7 @@ public abstract class AbstractRidePoolingVehicleApp<ConfigT extends CAbstractRid
 
         // Update routes and stops if no rides were declined
         if (declinedRides.isEmpty()) {
-            VehicleApp vehicleApp = getVehicleApp();
+            ReturningToPointOfBusinessVehicleApp vehicleApp = getVehicleApp();
             // Important: update routes first
             vehicleApp.updateRoutes(currentRoutes);
             vehicleApp.updateStops(currentStops);
@@ -156,9 +157,9 @@ public abstract class AbstractRidePoolingVehicleApp<ConfigT extends CAbstractRid
         System.err.println();
     }
 
-    protected final @NonNull VehicleApp getVehicleApp() {
-        return (VehicleApp) getOs().getApplications().parallelStream()
-            .filter(app -> app instanceof VehicleApp)
+    protected final @NonNull ReturningToPointOfBusinessVehicleApp getVehicleApp() {
+        return (ReturningToPointOfBusinessVehicleApp) getOs().getApplications().parallelStream()
+            .filter(app -> app instanceof ReturningToPointOfBusinessVehicleApp)
             .findFirst()
             .orElseThrow(() -> new IllegalStateException("This app requires MultiStopApp to be mapped"));
     }

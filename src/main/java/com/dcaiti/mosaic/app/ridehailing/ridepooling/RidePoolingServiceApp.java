@@ -3,10 +3,10 @@ package com.dcaiti.mosaic.app.ridehailing.ridepooling;
 import java.util.List;
 
 import com.dcaiti.mosaic.app.ridehailing.AbstractRidePoolingServiceApp;
+import com.dcaiti.mosaic.app.ridehailing.RidePoolingProvider;
 import com.dcaiti.mosaic.app.ridehailing.heuristics.RestrictedSubgraphMatching;
 import com.dcaiti.mosaic.app.ridehailing.server.Ride;
 import com.dcaiti.mosaic.app.ridehailing.server.RideProvider;
-import com.dcaiti.mosaic.app.ridehailing.simple.SimpleRideProvider;
 
 public class RidePoolingServiceApp extends
     AbstractRidePoolingServiceApp<CRidePoolingServiceApp> {
@@ -16,7 +16,7 @@ public class RidePoolingServiceApp extends
 
     @Override 
     protected RideProvider createRideBookingProvider() {
-        return new SimpleRideProvider(getConfiguration().rideOrders);
+        return new RidePoolingProvider(getConfiguration().rideOrders);
     }
 
     @Override
