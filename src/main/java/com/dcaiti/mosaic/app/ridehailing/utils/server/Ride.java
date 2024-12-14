@@ -1,7 +1,8 @@
-package com.dcaiti.mosaic.app.ridehailing.server;
+package com.dcaiti.mosaic.app.ridehailing.utils.server;
 
-import com.dcaiti.mosaic.app.ridehailing.vehicle.VehicleStop;
 import org.eclipse.mosaic.lib.geo.GeoPoint;
+
+import com.dcaiti.mosaic.app.ridehailing.utils.vehicle.VehicleStop;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;

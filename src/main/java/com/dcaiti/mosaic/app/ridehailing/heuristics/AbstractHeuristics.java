@@ -12,7 +12,7 @@ import org.eclipse.mosaic.lib.routing.RoutingParameters;
 import org.eclipse.mosaic.lib.routing.RoutingPosition;
 import org.eclipse.mosaic.lib.routing.RoutingRequest;
 
-import com.dcaiti.mosaic.app.ridehailing.vehicle.VehicleStop;
+import com.dcaiti.mosaic.app.ridehailing.utils.vehicle.VehicleStop;
 import com.google.common.collect.Iterables;
 
 public abstract class AbstractHeuristics {

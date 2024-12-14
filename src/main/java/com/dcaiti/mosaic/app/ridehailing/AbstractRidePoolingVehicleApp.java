@@ -17,13 +17,13 @@ import org.eclipse.mosaic.lib.util.scheduling.Event;
 import org.eclipse.mosaic.rti.TIME;
 
 import com.dcaiti.mosaic.app.ridehailing.config.CAbstractRidePoolingVehicleApp;
-import com.dcaiti.mosaic.app.ridehailing.messages.RideBookingMessage;
-import com.dcaiti.mosaic.app.ridehailing.messages.VehicleStatusMessage;
-import com.dcaiti.mosaic.app.ridehailing.rebalancing.ReturningToPointOfBusinessVehicleApp;
-import com.dcaiti.mosaic.app.ridehailing.server.Ride;
-import com.dcaiti.mosaic.app.ridehailing.server.VehicleStatus;
-import com.dcaiti.mosaic.app.ridehailing.vehicle.StopEvent;
-import com.dcaiti.mosaic.app.ridehailing.vehicle.VehicleStop;
+import com.dcaiti.mosaic.app.ridehailing.strategies.rebalancing.ReturningToPointOfBusinessVehicleApp;
+import com.dcaiti.mosaic.app.ridehailing.utils.messages.RideBookingMessage;
+import com.dcaiti.mosaic.app.ridehailing.utils.messages.VehicleStatusMessage;
+import com.dcaiti.mosaic.app.ridehailing.utils.server.Ride;
+import com.dcaiti.mosaic.app.ridehailing.utils.server.VehicleStatus;
+import com.dcaiti.mosaic.app.ridehailing.utils.vehicle.StopEvent;
+import com.dcaiti.mosaic.app.ridehailing.utils.vehicle.VehicleStop;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 

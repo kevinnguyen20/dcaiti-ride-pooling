@@ -4,24 +4,24 @@
             "orderTime": "0s",
             "deadline": "600s",
             "pickup": {
-                "latitude": 52.513093,
-                "longitude": 13.331058
+                "latitude": 52.513127,
+                "longitude": 13.331065
             },
             "dropoff": {
-                "latitude": 52.514123,
-                "longitude": 13.345852
+                "latitude": 52.513714,
+                "longitude": 13.339845
             }
         },
         {
-            "orderTime": "60s",
+            "orderTime": "20s",
             "deadline": "300s",
             "pickup": {
-                "latitude": 52.513345,
-                "longitude": 13.335098
+                "latitude": 52.513411,
+                "longitude": 13.335189
             },
             "dropoff": {
-                "latitude": 52.514586,
-                "longitude": 13.337083
+                "latitude": 52.514571,
+                "longitude": 13.337180
             }
         }
     ]

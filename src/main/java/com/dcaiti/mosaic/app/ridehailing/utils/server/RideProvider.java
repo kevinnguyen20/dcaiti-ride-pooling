@@ -1,4 +1,4 @@
-package com.dcaiti.mosaic.app.ridehailing.server;
+package com.dcaiti.mosaic.app.ridehailing.utils.server;
 
 import java.util.List;
 

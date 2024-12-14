@@ -2,7 +2,7 @@ package com.dcaiti.mosaic.app.ridehailing.ridepooling;
 
 import com.dcaiti.mosaic.app.ridehailing.AbstractRidePoolingVehicleApp;
 import com.dcaiti.mosaic.app.ridehailing.config.CAbstractRidePoolingVehicleApp;
-import com.dcaiti.mosaic.app.ridehailing.server.Ride;
+import com.dcaiti.mosaic.app.ridehailing.utils.server.Ride;
 
 public class RidePoolingVehicleApp extends AbstractRidePoolingVehicleApp<CAbstractRidePoolingVehicleApp> {
     public RidePoolingVehicleApp() {

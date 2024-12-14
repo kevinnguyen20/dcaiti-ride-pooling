@@ -1,8 +1,8 @@
 package com.dcaiti.mosaic.app.ridehailing;
 
 import com.dcaiti.mosaic.app.ridehailing.ridepooling.CRidePoolingServiceApp;
-import com.dcaiti.mosaic.app.ridehailing.server.Ride;
-import com.dcaiti.mosaic.app.ridehailing.server.RideProvider;
+import com.dcaiti.mosaic.app.ridehailing.utils.server.Ride;
+import com.dcaiti.mosaic.app.ridehailing.utils.server.RideProvider;
 
 import java.util.ArrayList;
 import java.util.Comparator;

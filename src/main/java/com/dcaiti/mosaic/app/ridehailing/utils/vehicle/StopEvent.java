@@ -1,4 +1,4 @@
-package com.dcaiti.mosaic.app.ridehailing.vehicle;
+package com.dcaiti.mosaic.app.ridehailing.utils.vehicle;
 
 import org.eclipse.mosaic.lib.util.scheduling.Event;
 import org.eclipse.mosaic.lib.util.scheduling.EventProcessor;

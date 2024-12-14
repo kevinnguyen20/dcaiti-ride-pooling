@@ -13,7 +13,7 @@
       {
           "name": "Taxi",
           "applications": [
-              "com.dcaiti.mosaic.app.ridehailing.rebalancing.ReturningToPointOfBusinessVehicleApp",
+              "com.dcaiti.mosaic.app.ridehailing.strategies.rebalancing.ReturningToPointOfBusinessVehicleApp",
               "com.dcaiti.mosaic.app.ridehailing.ridepooling.RidePoolingVehicleApp"
           ]
       }
@@ -24,7 +24,7 @@
           "route": "1",
           "pos": 220,
           "flow": 3600,
-          "maxNumberVehicles": 2,
+          "maxNumberVehicles": 1,
           "types": [
               { "name": "Taxi" }
           ]

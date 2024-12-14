@@ -1,11 +1,11 @@
 package com.dcaiti.mosaic.app.ridehailing;
 
-import com.dcaiti.mosaic.app.ridehailing.messages.RideBookingMessage;
-import com.dcaiti.mosaic.app.ridehailing.messages.VehicleStatusMessage;
-import com.dcaiti.mosaic.app.ridehailing.server.Ride;
-import com.dcaiti.mosaic.app.ridehailing.server.RideProvider;
-import com.dcaiti.mosaic.app.ridehailing.server.VehicleStatus;
-import com.dcaiti.mosaic.app.ridehailing.vehicle.VehicleStop;
+import com.dcaiti.mosaic.app.ridehailing.utils.messages.RideBookingMessage;
+import com.dcaiti.mosaic.app.ridehailing.utils.messages.VehicleStatusMessage;
+import com.dcaiti.mosaic.app.ridehailing.utils.server.Ride;
+import com.dcaiti.mosaic.app.ridehailing.utils.server.RideProvider;
+import com.dcaiti.mosaic.app.ridehailing.utils.server.VehicleStatus;
+import com.dcaiti.mosaic.app.ridehailing.utils.vehicle.VehicleStop;
 
 import java.util.Comparator;
 import java.util.HashMap;

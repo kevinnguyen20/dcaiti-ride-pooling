@@ -1,11 +1,11 @@
-package com.dcaiti.mosaic.app.ridehailing.messages;
-
-import com.dcaiti.mosaic.app.ridehailing.server.Ride;
-import com.dcaiti.mosaic.app.ridehailing.server.VehicleStatus;
+package com.dcaiti.mosaic.app.ridehailing.utils.messages;
 
 import org.eclipse.mosaic.lib.objects.v2x.EncodedPayload;
 import org.eclipse.mosaic.lib.objects.v2x.MessageRouting;
 import org.eclipse.mosaic.lib.objects.v2x.V2xMessage;
+
+import com.dcaiti.mosaic.app.ridehailing.utils.server.Ride;
+import com.dcaiti.mosaic.app.ridehailing.utils.server.VehicleStatus;
 
 import java.util.List;
 

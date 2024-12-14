@@ -1,4 +1,4 @@
-package com.dcaiti.mosaic.app.ridehailing.vehicle;
+package com.dcaiti.mosaic.app.ridehailing.utils.vehicle;
 
 import org.eclipse.mosaic.lib.geo.GeoPoint;
 import org.eclipse.mosaic.lib.geo.GeoUtils;

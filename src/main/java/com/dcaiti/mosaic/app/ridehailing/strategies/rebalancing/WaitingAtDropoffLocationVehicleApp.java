@@ -1,4 +1,4 @@
-package com.dcaiti.mosaic.app.ridehailing.rebalancing;
+package com.dcaiti.mosaic.app.ridehailing.strategies.rebalancing;
 
 import java.util.LinkedList;
 import java.util.Queue;
@@ -20,8 +20,8 @@ import org.eclipse.mosaic.lib.routing.RoutingPosition;
 import org.eclipse.mosaic.lib.util.scheduling.Event;
 
 import com.dcaiti.mosaic.app.ridehailing.config.CVehicleApp;
-import com.dcaiti.mosaic.app.ridehailing.vehicle.StopEvent;
-import com.dcaiti.mosaic.app.ridehailing.vehicle.VehicleStop;
+import com.dcaiti.mosaic.app.ridehailing.utils.vehicle.StopEvent;
+import com.dcaiti.mosaic.app.ridehailing.utils.vehicle.VehicleStop;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;

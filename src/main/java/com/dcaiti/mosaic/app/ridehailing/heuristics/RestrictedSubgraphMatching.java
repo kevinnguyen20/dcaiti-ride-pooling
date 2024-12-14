@@ -13,9 +13,9 @@ import org.eclipse.mosaic.lib.geo.GeoPoint;
 import org.eclipse.mosaic.lib.objects.road.IRoadPosition;
 import org.eclipse.mosaic.lib.routing.CandidateRoute;
 
-import com.dcaiti.mosaic.app.ridehailing.server.Ride;
-import com.dcaiti.mosaic.app.ridehailing.server.VehicleStatus;
-import com.dcaiti.mosaic.app.ridehailing.vehicle.VehicleStop;
+import com.dcaiti.mosaic.app.ridehailing.utils.server.Ride;
+import com.dcaiti.mosaic.app.ridehailing.utils.server.VehicleStatus;
+import com.dcaiti.mosaic.app.ridehailing.utils.vehicle.VehicleStop;
 
 public class RestrictedSubgraphMatching extends AbstractHeuristics {
     private static final int VEHICLE_CAPACITY = 2;
