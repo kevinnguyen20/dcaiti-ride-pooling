@@ -111,10 +111,6 @@ public class WaitingAtDropoffLocationVehicleApp extends ConfigurableApplication<
         );
     }
 
-    private static GeoPoint centerOf(IConnection connection) {
-        return GeoUtils.getPointBetween(connection.getStartNode().getPosition(), connection.getEndNode().getPosition());
-    }
-
     private void notifyOtherApps(VehicleStop rideStop) {
         getOs().getApplications().forEach(app -> {
             getOs().getEventManager().addEvent(new StopEvent(
@@ -207,6 +203,10 @@ public class WaitingAtDropoffLocationVehicleApp extends ConfigurableApplication<
             .costFunction(RoutingCostFunction.Fastest)
             .considerTurnCosts(considerTurnCosts);
         return getOs().getNavigationModule().calculateRoutes(target, routingParameters).getBestRoute();
+    }
+
+    private static GeoPoint centerOf(IConnection connection) {
+        return GeoUtils.getPointBetween(connection.getStartNode().getPosition(), connection.getEndNode().getPosition());
     }
 
     @Override
