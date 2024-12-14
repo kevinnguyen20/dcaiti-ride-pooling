@@ -131,7 +131,7 @@ public class WaitingAtDropoffLocationVehicleApp extends ConfigurableApplication<
         return stopPosition.getPositionOnRoad().getConnectionId().equals(getOs().getRoadPosition().getConnectionId());
     }
 
-    public void driveToNextStop() {
+    private void driveToNextStop() {
         if (currentStops.isEmpty()) {
             getOs().getEventManager().addEvent(getOs().getSimulationTime() + MIN_STOP_TIME, e -> driveToNextStop());
             return;
