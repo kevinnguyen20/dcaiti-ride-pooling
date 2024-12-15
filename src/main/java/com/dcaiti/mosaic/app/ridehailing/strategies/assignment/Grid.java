@@ -18,7 +18,7 @@ public class Grid {
     // Map: coordinates to list of shuttles
     private static Map<String, List<VehicleStatus>> grid = new HashMap<>();
 
-    private static List<VehicleStatus> finalListOfCandidateShuttles = new LinkedList<>();
+    private static List<VehicleStatus> listOfShuttlesOnCurrentSearchLevel;
     
     // TODO: test this method
     public static Map<String, List<VehicleStatus>> createGridFromShuttlePositions(Map<String, VehicleStatus> registeredShuttles) {
@@ -37,6 +37,7 @@ public class Grid {
 
     private static void assignShuttleToGridCell() {
         candidateShuttles.forEach(shuttle -> {
+            // Get coordinates of the pickup location
             GeoPoint shuttleLocation = shuttle.getCurrentPosition();
             int x = getGridCellIndex(shuttleLocation.toCartesian().getX());
             int y = getGridCellIndex(shuttleLocation.toCartesian().getY());
@@ -44,6 +45,7 @@ public class Grid {
             String key = String.valueOf(x) + "," + String.valueOf(y);
             VehicleStatus value = shuttle;
 
+            // Create a new list if the grid cell is empty
             if (!grid.containsKey(key)) grid.put(key, new LinkedList<>());
             grid.get(key).add(value);
         });
@@ -61,31 +63,42 @@ public class Grid {
     }
 
     // TODO: test this method
-    public static VehicleStatus getShuttle(Ride passenger) {
-        finalListOfCandidateShuttles.clear();
+    public static VehicleStatus getShuttle(Ride passenger, int searchLevel) {
+        // Extract shuttles from the current search level
+        getShuttlesOnCurrentSearchLevel(passenger, searchLevel);
+
+        // Limit the number of candidate shuttles, other methods possible
+        Collections.shuffle(listOfShuttlesOnCurrentSearchLevel);
+        List<VehicleStatus> finalListOfCandidateShuttles = listOfShuttlesOnCurrentSearchLevel.stream().limit(5).toList();
         
+        // Handle edge cases
+        if (finalListOfCandidateShuttles.isEmpty()) return null;
+        if (finalListOfCandidateShuttles.size() == 1) return finalListOfCandidateShuttles.get(0);
+
+        // Get the closest shuttle on the current search level
+        VehicleStatus closestShuttle = getClosestShuttle(passenger, finalListOfCandidateShuttles);
+
+        return closestShuttle;
+    }
+
+    private static void getShuttlesOnCurrentSearchLevel(Ride passenger, int searchLevel) {
+        // Reset the list of shuttles on the current search level
+        listOfShuttlesOnCurrentSearchLevel = new LinkedList<>();
+
+        // Get coordinates from the pickup location
         GeoPoint passengerLocation = passenger.getPickupLocation().getGeoPoint();
         int x = getGridCellIndex(passengerLocation.toCartesian().getX());
         int y = getGridCellIndex(passengerLocation.toCartesian().getY());
 
-        for (int i = -1; i < 2; i++) {
-            for (int j = -1; j < 2; j++) {
+        // Extract shuttles from the respective grid cells
+        for (int i = -1*searchLevel; i < searchLevel+1; i++) {
+            for (int j = -1*searchLevel; j < searchLevel+1; j++) {
                 String key = String.valueOf(x + i) + "," + String.valueOf(y + j);
 
                 if (!grid.containsKey(key)) continue;
-                grid.get(key).forEach(shuttle -> finalListOfCandidateShuttles.add(shuttle));
+                grid.get(key).forEach(shuttle -> listOfShuttlesOnCurrentSearchLevel.add(shuttle));
             }
         }
-
-        Collections.shuffle(finalListOfCandidateShuttles);
-        finalListOfCandidateShuttles.stream().limit(5).toList();
-        
-        if (finalListOfCandidateShuttles.isEmpty()) return null;
-        if (finalListOfCandidateShuttles.size() == 1) return finalListOfCandidateShuttles.get(0);
-
-        VehicleStatus selectedShuttle = getClosestShuttle(passenger, finalListOfCandidateShuttles);
-
-        return selectedShuttle;
     }
 
     private static VehicleStatus getClosestShuttle(Ride passenger, List<VehicleStatus> selectedShuttles) {
