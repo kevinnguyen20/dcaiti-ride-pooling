@@ -13,6 +13,7 @@ import org.eclipse.mosaic.lib.geo.GeoPoint;
 import org.eclipse.mosaic.lib.objects.road.IRoadPosition;
 import org.eclipse.mosaic.lib.routing.CandidateRoute;
 
+import com.dcaiti.mosaic.app.ridehailing.strategies.fleet.FleetManagement;
 import com.dcaiti.mosaic.app.ridehailing.utils.server.Ride;
 import com.dcaiti.mosaic.app.ridehailing.utils.server.VehicleStatus;
 import com.dcaiti.mosaic.app.ridehailing.utils.vehicle.VehicleStop;
@@ -55,12 +56,9 @@ public class RestrictedSubgraphMatching extends AbstractHeuristics {
         vehicleIdle = new LinkedList<>();
 
         // Create lists of idle vehicles and vehicles en route
-        registeredShuttles.values().forEach(shuttle -> {
-            if (shuttle.hasEnoughCapacity() && !shuttle.getCurrentRides().isEmpty()) vehicleEnroute.add(shuttle);
-
-            else if (shuttle.getCurrentRides().isEmpty()) 
-                vehicleIdle.add(shuttle);
-        });
+        Map<String, List<VehicleStatus>> vehicleFleet = FleetManagement.analyzeFleet(registeredShuttles);
+        vehicleEnroute = FleetManagement.getPartlyOccupiedShuttles(vehicleFleet);
+        vehicleIdle = FleetManagement.getIdleShuttles(vehicleFleet);
 
         passengers.forEach(passenger -> {
             candidateShuttle = null;
