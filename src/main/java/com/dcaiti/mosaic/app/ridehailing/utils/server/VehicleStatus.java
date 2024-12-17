@@ -2,6 +2,8 @@ package com.dcaiti.mosaic.app.ridehailing.utils.server;
 
 import org.eclipse.mosaic.lib.geo.GeoPoint;
 
+import com.dcaiti.mosaic.app.ridehailing.strategies.fleet.FleetManagement;
+
 import java.io.Serializable;
 import java.util.List;
 
@@ -13,7 +15,7 @@ public class VehicleStatus implements Serializable {
     private final GeoPoint currentPosition;
     private final List<Ride> currentRides;
     private final double totalDistanceDriven;
-    private int vehicleCapacity = 2;
+    private int vehicleCapacity = FleetManagement.SHUTTLE_CAPACITY;
 
     public VehicleStatus(String vehicleId, GeoPoint currentPosition, List<Ride> currentRides, double distanceDriven) {
         this.vehicleId = vehicleId;

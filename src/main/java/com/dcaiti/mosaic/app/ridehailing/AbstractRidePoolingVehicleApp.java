@@ -17,6 +17,7 @@ import org.eclipse.mosaic.lib.util.scheduling.Event;
 import org.eclipse.mosaic.rti.TIME;
 
 import com.dcaiti.mosaic.app.ridehailing.config.CAbstractRidePoolingVehicleApp;
+import com.dcaiti.mosaic.app.ridehailing.strategies.fleet.FleetManagement;
 import com.dcaiti.mosaic.app.ridehailing.strategies.rebalancing.ReturningToPointOfBusinessVehicleApp;
 import com.dcaiti.mosaic.app.ridehailing.utils.messages.RideBookingMessage;
 import com.dcaiti.mosaic.app.ridehailing.utils.messages.VehicleStatusMessage;
@@ -30,8 +31,6 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 public abstract class AbstractRidePoolingVehicleApp<ConfigT extends CAbstractRidePoolingVehicleApp> extends ConfigurableApplication<ConfigT, VehicleOperatingSystem> implements CommunicationApplication {
 
     private static final long UPDATE_INTERVAL = 5 * TIME.SECOND;
-    // TODO: heuristic determine this value or set this value upon spawn
-    private static final int VEHICLE_CAPACITY = 2;
 
     private List<Ride> allRides = new LinkedList<>();
     private Queue<VehicleStop> currentStops = new LinkedList<>();
@@ -139,7 +138,7 @@ public abstract class AbstractRidePoolingVehicleApp<ConfigT extends CAbstractRid
         switch (ride.getStatus()) {
             case DROPPED_OFF, DECLINED, REJECTED, PICKED_UP -> {}
             case ASSIGNED -> {
-                if (currentRides.size() >= VEHICLE_CAPACITY) {
+                if (currentRides.size() >= FleetManagement.SHUTTLE_CAPACITY) {
                     declineRide(ride);
                 } else {
                     onAcceptRide(ride);

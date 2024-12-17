@@ -19,7 +19,6 @@ import com.dcaiti.mosaic.app.ridehailing.utils.server.VehicleStatus;
 import com.dcaiti.mosaic.app.ridehailing.utils.vehicle.VehicleStop;
 
 public class RestrictedSubgraphMatching extends AbstractHeuristics {
-    private static final int VEHICLE_CAPACITY = 2;
     // private static final double VEHICLE_SPEED = 5.28;
     private static boolean init = false;
 
@@ -46,9 +45,8 @@ public class RestrictedSubgraphMatching extends AbstractHeuristics {
         currentStops = stops;
         currentRoutes = routes;
 
-        // TODO: Still manually setting vehicle capacities
         if (!init) registeredShuttles.values().forEach(shuttle -> 
-            shuttle.setVehicleCapacity(VEHICLE_CAPACITY)
+            shuttle.setVehicleCapacity(2)
         );
 
         // Reset lists of vehicles for reassignment
