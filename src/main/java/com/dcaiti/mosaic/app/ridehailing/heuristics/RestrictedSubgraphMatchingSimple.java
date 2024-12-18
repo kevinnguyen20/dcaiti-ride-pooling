@@ -18,7 +18,7 @@ import com.dcaiti.mosaic.app.ridehailing.utils.server.Ride;
 import com.dcaiti.mosaic.app.ridehailing.utils.server.VehicleStatus;
 import com.dcaiti.mosaic.app.ridehailing.utils.vehicle.VehicleStop;
 
-public class RestrictedSubgraphMatching extends AbstractHeuristics {
+public class RestrictedSubgraphMatchingSimple extends AbstractHeuristics {
     // private static final double VEHICLE_SPEED = 5.28;
     private static boolean init = false;
 

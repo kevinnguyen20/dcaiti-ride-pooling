@@ -4,7 +4,7 @@ import java.util.List;
 
 import com.dcaiti.mosaic.app.ridehailing.AbstractRidePoolingServiceApp;
 import com.dcaiti.mosaic.app.ridehailing.RidePoolingProvider;
-import com.dcaiti.mosaic.app.ridehailing.heuristics.RestrictedSubgraphMatching;
+import com.dcaiti.mosaic.app.ridehailing.heuristics.RestrictedSubgraphMatchingSimple;
 import com.dcaiti.mosaic.app.ridehailing.utils.server.Ride;
 import com.dcaiti.mosaic.app.ridehailing.utils.server.RideProvider;
 
@@ -22,7 +22,7 @@ public class RidePoolingServiceApp extends
     @Override
     protected void assignBookingsToShuttles(List<Ride> newBookings) {
         // Vehicle capacity of 2
-        RestrictedSubgraphMatching.assignBookingsToShuttles(storedRides, registeredShuttles, newBookings, rides, stops, routes);
+        RestrictedSubgraphMatchingSimple.assignBookingsToShuttles(storedRides, registeredShuttles, newBookings, rides, stops, routes);
     }
 
     @Override
