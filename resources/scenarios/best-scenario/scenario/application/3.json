@@ -1,0 +1,40 @@
+{
+    "rideOrders": [
+        {
+            "orderTime": "35s",
+            "deadline": "600s",
+            "pickup": {
+                "latitude": 52.513128,
+                "longitude": 13.331148
+            },
+            "dropoff": {
+                "latitude": 52.514278,
+                "longitude": 13.348032
+            }
+        },
+        {
+            "orderTime": "41s",
+            "deadline": "300s",
+            "pickup": {
+                "latitude": 52.513260,
+                "longitude": 13.333170
+            },
+            "dropoff": {
+                "latitude": 52.513907,
+                "longitude": 13.349567
+            }
+        },
+        {
+            "orderTime": "70s",
+            "deadline": "300s",
+            "pickup": {
+                "latitude": 52.513826,
+                "longitude": 13.341534
+            },
+            "dropoff": {
+                "latitude": 52.513427,
+                "longitude": 13.350276
+            }
+        }
+    ]
+}
