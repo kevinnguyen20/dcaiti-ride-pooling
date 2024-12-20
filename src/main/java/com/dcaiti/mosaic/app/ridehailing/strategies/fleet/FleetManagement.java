@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.dcaiti.mosaic.app.ridehailing.utils.server.Ride;
 import com.dcaiti.mosaic.app.ridehailing.utils.server.VehicleStatus;
@@ -61,5 +62,11 @@ public class FleetManagement {
 
     public static List<VehicleStatus> getFullyOccupiedShuttles(Map<String, List<VehicleStatus>> vehicleFleet) {
         return vehicleFleet.get("fullyOccupiedShuttles");
+    }
+
+    public static List<VehicleStatus> getAllShuttlesWithEnoughCapacity(Map<String, VehicleStatus> registeredShuttles) {
+        return registeredShuttles.values().stream()
+            .filter(VehicleStatus::hasEnoughCapacity)
+            .collect(Collectors.toList());            
     }
 }
