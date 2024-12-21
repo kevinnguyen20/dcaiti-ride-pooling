@@ -88,9 +88,8 @@ public class RestrictedSubgraphMatchingGreedy extends AbstractHeuristics {
 
                 if (isInsideEllipse(shuttleOrigin, shuttleDestination, passengerOrigin)) {
                     if (isInsideEllipse(passengerOrigin, passengerDestination, shuttleOrigin)) {
-                        // assignBookingToShuttleEnroute(passenger, shuttle);
                         double distance = distance(passengerOrigin, centerOf(shuttlePositionOnRoad.getConnection()).toCartesian());
-                        
+
                         if (distance < shortestDistance) {
                             shortestDistance = distance;
                             candidateShuttle = shuttle;
@@ -98,7 +97,6 @@ public class RestrictedSubgraphMatchingGreedy extends AbstractHeuristics {
 
                         return;
                     } else if (isInsideEllipse(shuttleOrigin, shuttleDestination, passengerDestination) && distance(passengerDestination, shuttleDestination) < distance(passengerOrigin, shuttleDestination)) {
-                        // assignBookingToShuttleEnroute(passenger, shuttle);
                         double distance = distance(passengerOrigin, centerOf(shuttlePositionOnRoad.getConnection()).toCartesian());
 
                         if (distance < shortestDistance) {

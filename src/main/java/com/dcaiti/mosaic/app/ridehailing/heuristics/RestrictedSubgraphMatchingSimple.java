@@ -85,12 +85,12 @@ public class RestrictedSubgraphMatchingSimple extends AbstractHeuristics {
 
                 if (isInsideEllipse(shuttleOrigin, shuttleDestination, passengerOrigin)) {
                     if (isInsideEllipse(passengerOrigin, passengerDestination, shuttleOrigin)) {
-                        assignBookingToShuttleEnroute(passenger, shuttle);
                         candidateShuttle = shuttle;
+                        assignBookingToShuttleEnroute(passenger, candidateShuttle);
                         return;
                     } else if (isInsideEllipse(shuttleOrigin, shuttleDestination, passengerDestination) && distance(passengerDestination, shuttleDestination) < distance(passengerOrigin, shuttleDestination)) {
-                        assignBookingToShuttleEnroute(passenger, shuttle);
                         candidateShuttle = shuttle;
+                        assignBookingToShuttleEnroute(passenger, candidateShuttle);
                         return;
                     }
                 };
@@ -105,7 +105,7 @@ public class RestrictedSubgraphMatchingSimple extends AbstractHeuristics {
                 if (candidateShuttleIdle != null) {
                     assignBookingToIdleShuttle(passenger, candidateShuttleIdle);
                     vehicleIdle.removeIf(shuttle -> shuttle.getVehicleId().equals(candidateShuttleIdle.getVehicleId()));
-                } else passenger.setStatus(Ride.Status.DECLINED);
+                } else passenger.setStatus(Ride.Status.DECLINED); // Fail-safe
             } else {
                 // Remove full shuttle from list of enroute vehicles
                 if (!vehicleEnroute.isEmpty() && candidateShuttle != null) vehicleEnroute.removeIf(shuttle -> shuttle.getVehicleId().equals(candidateShuttle.getVehicleId()));
