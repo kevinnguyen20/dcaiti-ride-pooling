@@ -42,7 +42,7 @@ public final class RoutingUtils {
     }
 
     private static boolean setModifiedPositionOnRoad(VehicleStop stop, IRoadPosition shuttlePosition) {
-        IRoadPosition stopPositionOnRoad = SimulationKernel.SimulationKernel.getCentralNavigationComponent().getRouting().findClosestRoadPosition(stop.getGeoPoint());
+        IRoadPosition stopPositionOnRoad = getClosestRoadPosition(stop.getGeoPoint());
         if (stopPositionOnRoad == null) return false;
 
         IConnection stopConnection = stopPositionOnRoad.getConnection();
@@ -100,5 +100,11 @@ public final class RoutingUtils {
 
     public static GeoPoint centerOf(IConnection connection) {
         return GeoUtils.getPointBetween(connection.getStartNode().getPosition(), connection.getEndNode().getPosition());
+    }
+
+    public static IRoadPosition getClosestRoadPosition(GeoPoint position) {
+        return SimulationKernel.SimulationKernel.getCentralNavigationComponent()
+            .getRouting()
+            .findClosestRoadPosition(position);
     }
 }

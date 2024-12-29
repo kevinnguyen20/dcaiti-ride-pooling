@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
-import org.eclipse.mosaic.fed.application.ambassador.SimulationKernel;
 import org.eclipse.mosaic.lib.geo.CartesianPoint;
 import org.eclipse.mosaic.lib.geo.GeoPoint;
 import org.eclipse.mosaic.lib.objects.road.IRoadPosition;
@@ -64,7 +63,7 @@ public class RestrictedSubgraphMatchingSimple {
                 CartesianPoint shuttleDestination = getCartesianPoint(currentRide.getDropoffLocation());
 
                 // Determine the shuttle position on the road
-                IRoadPosition shuttlePositionOnRoad = getClosestRoadPosition(shuttle.getCurrentPosition());
+                IRoadPosition shuttlePositionOnRoad = RoutingUtils.getClosestRoadPosition(shuttle.getCurrentPosition());
 
                 // If passenger is already picked up, set origin of current ride
                 // to the current shuttle position
@@ -149,7 +148,7 @@ public class RestrictedSubgraphMatchingSimple {
         // Differentiation between ASSIGNED and PICKED_UP
         // First stop either shuttle's current position or a ride's origin
         List<CartesianPoint> initialPoints = currentRide.getStatus() == Ride.Status.PICKED_UP
-            ? List.of(RoutingUtils.centerOf(getClosestRoadPosition(shuttle.getCurrentPosition()).getConnection()).toCartesian(), rideDestination)
+            ? List.of(RoutingUtils.centerOf(RoutingUtils.getClosestRoadPosition(shuttle.getCurrentPosition()).getConnection()).toCartesian(), rideDestination)
             : List.of(rideOrigin, rideDestination);
 
         int start = currentRide.getStatus() == Ride.Status.PICKED_UP ? 1 : 0;
@@ -178,7 +177,7 @@ public class RestrictedSubgraphMatchingSimple {
 
     private static double getDistanceToIdleShuttle(VehicleStop pickup, GeoPoint shuttlePosition) {
         // Determine the shuttle position on the road
-        IRoadPosition shuttlePositionOnRoad = getClosestRoadPosition(shuttlePosition);
+        IRoadPosition shuttlePositionOnRoad = RoutingUtils.getClosestRoadPosition(shuttlePosition);
 
         // Set road positions for upcoming stops
         RoutingUtils.addPositionOnRoad(pickup, shuttlePositionOnRoad);
@@ -245,7 +244,7 @@ public class RestrictedSubgraphMatchingSimple {
 
     private static void updateRoutes(VehicleStatus shuttle) {
         // Determine the shuttle position on the road
-        IRoadPosition shuttlePositionOnRoad = getClosestRoadPosition(shuttle.getCurrentPosition());
+        IRoadPosition shuttlePositionOnRoad = RoutingUtils.getClosestRoadPosition(shuttle.getCurrentPosition());
 
         // Set road positions for upcoming stops
         Queue<VehicleStop> stops = currentStops.get(shuttle.getVehicleId());
@@ -265,7 +264,7 @@ public class RestrictedSubgraphMatchingSimple {
 
     private static void updateRoutes(VehicleStatus shuttle, Ride passenger) {
         // Determine the shuttle position on the road
-        IRoadPosition shuttlePositionOnRoad = getClosestRoadPosition(shuttle.getCurrentPosition());
+        IRoadPosition shuttlePositionOnRoad = RoutingUtils.getClosestRoadPosition(shuttle.getCurrentPosition());
 
         // Set road positions for upcoming stops
         RoutingUtils.addPositionOnRoad(passenger.getPickupLocation(), shuttlePositionOnRoad);
@@ -276,11 +275,5 @@ public class RestrictedSubgraphMatchingSimple {
         // Update routes
         currentRoutes.get(shuttle.getVehicleId()).add(RoutingUtils.getBestRoute(shuttlePositionOnRoad, pickup));
         currentRoutes.get(shuttle.getVehicleId()).add(RoutingUtils.getBestRoute(pickup, dropoff));
-    }
-
-    private static IRoadPosition getClosestRoadPosition(GeoPoint position) {
-        return SimulationKernel.SimulationKernel.getCentralNavigationComponent()
-            .getRouting()
-            .findClosestRoadPosition(position);
     }
 }
