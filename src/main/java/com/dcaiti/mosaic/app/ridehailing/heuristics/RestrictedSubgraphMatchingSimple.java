@@ -20,8 +20,6 @@ import com.dcaiti.mosaic.app.ridehailing.utils.server.VehicleStatus;
 import com.dcaiti.mosaic.app.ridehailing.utils.vehicle.VehicleStop;
 
 public class RestrictedSubgraphMatchingSimple {
-    // private static final double VEHICLE_SPEED = 5.28;
-
     private static List<Ride> passengers = new LinkedList<>();
     private static List<VehicleStatus> vehicleIdle = new LinkedList<>();
     private static List<VehicleStatus> vehicleEnroute = new LinkedList<>();
@@ -31,7 +29,6 @@ public class RestrictedSubgraphMatchingSimple {
     private static Map<String, Queue<VehicleStop>> currentStops;
     private static Map<String, Queue<CandidateRoute>> currentRoutes;
 
-    // TODO: no deadline check yet (if it is even possible to transport in time)
     public static void assignBookingsToShuttles(
         Map<Integer, Ride> storedRides,
         Map<String, VehicleStatus> registeredShuttles, 
