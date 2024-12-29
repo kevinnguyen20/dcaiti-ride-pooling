@@ -11,8 +11,12 @@ import com.dcaiti.mosaic.app.ridehailing.utils.server.VehicleStatus;
 
 public class FleetManagement {
     // Homogenous vehicle fleet
-    public static final int SHUTTLE_CAPACITY = 2;
+    public static int SHUTTLE_CAPACITY = 2;
     private static Map<String, List<VehicleStatus>> vehicleFleet = new HashMap<>();
+
+    public static void setShuttleCapacity(int capacity) {
+        SHUTTLE_CAPACITY = capacity;
+    }
 
     public static Map<String, List<VehicleStatus>> analyzeFleet(Map<String, VehicleStatus> registeredShuttles) {
         // Clear the old status of the fleet

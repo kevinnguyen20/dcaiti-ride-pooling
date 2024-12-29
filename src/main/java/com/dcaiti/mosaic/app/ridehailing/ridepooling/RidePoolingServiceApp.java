@@ -4,8 +4,10 @@ import java.util.List;
 
 import com.dcaiti.mosaic.app.ridehailing.AbstractRidePoolingServiceApp;
 import com.dcaiti.mosaic.app.ridehailing.RidePoolingProvider;
+import com.dcaiti.mosaic.app.ridehailing.heuristics.InsertionHeuristic;
 import com.dcaiti.mosaic.app.ridehailing.heuristics.RestrictedSubgraphMatchingGreedy;
 import com.dcaiti.mosaic.app.ridehailing.heuristics.RestrictedSubgraphMatchingSimple;
+import com.dcaiti.mosaic.app.ridehailing.strategies.fleet.FleetManagement;
 import com.dcaiti.mosaic.app.ridehailing.utils.server.Ride;
 import com.dcaiti.mosaic.app.ridehailing.utils.server.RideProvider;
 
@@ -25,8 +27,18 @@ public class RidePoolingServiceApp extends
     @Override
     protected void assignBookingsToShuttles(List<Ride> newBookings) {
         switch(heuristicMode) {
-            case 0 -> RestrictedSubgraphMatchingSimple.assignBookingsToShuttles(storedRides, registeredShuttles, newBookings, rides, stops, routes);
-            case 1 -> RestrictedSubgraphMatchingGreedy.assignBookingsToShuttles(storedRides, registeredShuttles, newBookings, rides, stops, routes);
+            case 0 -> {
+                FleetManagement.setShuttleCapacity(2);
+                RestrictedSubgraphMatchingSimple.assignBookingsToShuttles(storedRides, registeredShuttles, newBookings, rides, stops, routes);
+            }
+            case 1 -> {
+                FleetManagement.setShuttleCapacity(2);
+                RestrictedSubgraphMatchingGreedy.assignBookingsToShuttles(storedRides, registeredShuttles, newBookings, rides, stops, routes);
+            }
+            case 2 -> {
+                FleetManagement.setShuttleCapacity(4);
+                InsertionHeuristic.assignBookingsToShuttles(storedRides, registeredShuttles, newBookings, rides, stops, routes);
+            }
         }
     }
 
