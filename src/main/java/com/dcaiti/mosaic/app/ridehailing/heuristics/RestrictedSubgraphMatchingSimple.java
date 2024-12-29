@@ -45,10 +45,6 @@ public class RestrictedSubgraphMatchingSimple extends AbstractHeuristics {
         currentStops = stops;
         currentRoutes = routes;
 
-        if (!init) registeredShuttles.values().forEach(shuttle -> 
-            shuttle.setVehicleCapacity(2)
-        );
-
         // Reset lists of vehicles for reassignment
         vehicleEnroute = new LinkedList<>();
         vehicleIdle = new LinkedList<>();
