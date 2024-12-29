@@ -156,6 +156,7 @@ public class ReturningToPointOfBusinessVehicleApp extends ConfigurableApplicatio
         if (!getConfiguration().waitUntilDropOffTime) return true;
     
         // Future use of randomization
+        @SuppressWarnings("unused")
         boolean isDropOffOrPickUp = stopPosition.getStopReason() == VehicleStop.StopReason.DROP_OFF 
             || stopPosition.getStopReason() == VehicleStop.StopReason.PICK_UP;
            

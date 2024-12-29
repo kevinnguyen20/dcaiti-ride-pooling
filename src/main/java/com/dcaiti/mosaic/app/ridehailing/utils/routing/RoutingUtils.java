@@ -1,4 +1,4 @@
-package com.dcaiti.mosaic.app.ridehailing.heuristics;
+package com.dcaiti.mosaic.app.ridehailing.utils.routing;
 
 import org.eclipse.mosaic.fed.application.ambassador.SimulationKernel;
 import org.eclipse.mosaic.fed.application.ambassador.simulation.navigation.RoadPositionFactory;
@@ -15,7 +15,7 @@ import org.eclipse.mosaic.lib.routing.RoutingRequest;
 import com.dcaiti.mosaic.app.ridehailing.utils.vehicle.VehicleStop;
 import com.google.common.collect.Iterables;
 
-public abstract class AbstractHeuristics {
+public final class RoutingUtils {
     public static final boolean TURN_COSTS = false;
 
     private static final int MAX_TRIES_CHANGE_STOP_POSITION = 10;
