@@ -20,7 +20,6 @@ import com.dcaiti.mosaic.app.ridehailing.utils.vehicle.VehicleStop;
 
 public class RestrictedSubgraphMatchingGreedy extends AbstractHeuristics {
     // private static final double VEHICLE_SPEED = 5.28;
-    private static boolean init = false;
 
     private static List<Ride> passengers = new LinkedList<>();
     private static List<VehicleStatus> vehicleIdle = new LinkedList<>();
