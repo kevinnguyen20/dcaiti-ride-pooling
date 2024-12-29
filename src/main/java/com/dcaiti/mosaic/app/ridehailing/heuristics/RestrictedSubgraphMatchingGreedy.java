@@ -13,6 +13,7 @@ import org.eclipse.mosaic.lib.objects.road.IRoadPosition;
 import org.eclipse.mosaic.lib.routing.CandidateRoute;
 
 import com.dcaiti.mosaic.app.ridehailing.strategies.fleet.FleetManagement;
+import com.dcaiti.mosaic.app.ridehailing.utils.heuristics.HeuristicsUtils;
 import com.dcaiti.mosaic.app.ridehailing.utils.routing.RoutingUtils;
 import com.dcaiti.mosaic.app.ridehailing.utils.server.Ride;
 import com.dcaiti.mosaic.app.ridehailing.utils.server.VehicleStatus;
@@ -62,8 +63,8 @@ public class RestrictedSubgraphMatchingGreedy {
                 // Shuttles with enough capacity which are en-route only have
                 // max. 1 passenger
                 Ride currentRide = shuttle.getCurrentRides().get(0);
-                CartesianPoint shuttleOrigin = getCartesianPoint(currentRide.getPickupLocation());
-                CartesianPoint shuttleDestination = getCartesianPoint(currentRide.getDropoffLocation());
+                CartesianPoint shuttleOrigin = HeuristicsUtils.getCartesianPoint(currentRide.getPickupLocation());
+                CartesianPoint shuttleDestination = HeuristicsUtils.getCartesianPoint(currentRide.getDropoffLocation());
 
                 // Determine the shuttle position on the road
                 IRoadPosition shuttlePositionOnRoad = RoutingUtils.getClosestRoadPosition(shuttle.getCurrentPosition());
@@ -75,8 +76,8 @@ public class RestrictedSubgraphMatchingGreedy {
                 // Set road positions for upcoming stops
                 RoutingUtils.addPositionOnRoad(pickup, shuttlePositionOnRoad);
                 RoutingUtils.addPositionOnRoad(dropoff, shuttlePositionOnRoad);
-                CartesianPoint passengerOrigin = getCartesianPoint(pickup);
-                CartesianPoint passengerDestination = getCartesianPoint(dropoff);
+                CartesianPoint passengerOrigin = HeuristicsUtils.getCartesianPoint(pickup);
+                CartesianPoint passengerDestination = HeuristicsUtils.getCartesianPoint(dropoff);
 
                 if (isInsideEllipse(shuttleOrigin, shuttleDestination, passengerOrigin)) {
                     if (isInsideEllipse(passengerOrigin, passengerDestination, shuttleOrigin)) {
@@ -152,10 +153,10 @@ public class RestrictedSubgraphMatchingGreedy {
 
     private static void updateStops(Ride passenger, VehicleStatus shuttle) {
         Ride currentRide = shuttle.getCurrentRides().get(0);
-        CartesianPoint rideOrigin = getCartesianPoint(currentRide.getPickupLocation());
-        CartesianPoint rideDestination = getCartesianPoint(currentRide.getDropoffLocation());
-        CartesianPoint passengerOrigin = getCartesianPoint(passenger.getPickupLocation());
-        CartesianPoint passengerDestination = getCartesianPoint(passenger.getDropoffLocation());
+        CartesianPoint rideOrigin = HeuristicsUtils.getCartesianPoint(currentRide.getPickupLocation());
+        CartesianPoint rideDestination = HeuristicsUtils.getCartesianPoint(currentRide.getDropoffLocation());
+        CartesianPoint passengerOrigin = HeuristicsUtils.getCartesianPoint(passenger.getPickupLocation());
+        CartesianPoint passengerDestination = HeuristicsUtils.getCartesianPoint(passenger.getDropoffLocation());
 
         List<CartesianPoint> result = new ArrayList<>();
         double minDistance = Double.MAX_VALUE;
@@ -217,20 +218,16 @@ public class RestrictedSubgraphMatchingGreedy {
         Queue<VehicleStop> stops = currentStops.get(shuttleId);
     
         Map<CartesianPoint, VehicleStop> tmp = Map.of(
-            getCartesianPoint(currentRide.getPickupLocation()), currentRide.getPickupLocation(),
-            getCartesianPoint(currentRide.getDropoffLocation()), currentRide.getDropoffLocation(),
-            getCartesianPoint(passenger.getPickupLocation()), passenger.getPickupLocation(),
-            getCartesianPoint(passenger.getDropoffLocation()), passenger.getDropoffLocation()
+            HeuristicsUtils.getCartesianPoint(currentRide.getPickupLocation()), currentRide.getPickupLocation(),
+            HeuristicsUtils.getCartesianPoint(currentRide.getDropoffLocation()), currentRide.getDropoffLocation(),
+            HeuristicsUtils.getCartesianPoint(passenger.getPickupLocation()), passenger.getPickupLocation(),
+            HeuristicsUtils.getCartesianPoint(passenger.getDropoffLocation()), passenger.getDropoffLocation()
         );
     
         // Add new stops
         points.forEach(point -> {
             if (tmp.containsKey(point)) stops.add(tmp.get(point));
         });
-    }
-
-    private static CartesianPoint getCartesianPoint(VehicleStop position) {
-        return RoutingUtils.centerOf(position.getPositionOnRoad().getConnection()).toCartesian();
     }
 
     private static void assignBookingToIdleShuttle(Ride passenger, VehicleStatus shuttle) {
