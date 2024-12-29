@@ -75,6 +75,7 @@ public abstract class AbstractRidePoolingVehicleApp<ConfigT extends CAbstractRid
             getOs().getId(),
             getOs().getNavigationModule().getCurrentPosition(),
             currentRides,
+            currentStops.stream().toList(),
             getOs().getVehicleData().getDistanceDriven()
         );
     }
