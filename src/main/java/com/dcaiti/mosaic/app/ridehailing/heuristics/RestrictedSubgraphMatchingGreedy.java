@@ -150,11 +150,11 @@ public class RestrictedSubgraphMatchingGreedy {
 
         // Update rides, stops, and routes
         allRides.get(shuttleId).add(passenger);
-        stopOrder(passenger, shuttle);
+        getOrderOfStops(passenger, shuttle);
         updateRoutes(shuttle);
     }
 
-    private static void stopOrder(Ride passenger, VehicleStatus shuttle) {
+    private static void getOrderOfStops(Ride passenger, VehicleStatus shuttle) {
         Ride currentRide = shuttle.getCurrentRides().get(0);
         CartesianPoint rideOrigin = getCartesianPoint(currentRide.getPickupLocation());
         CartesianPoint rideDestination = getCartesianPoint(currentRide.getDropoffLocation());
