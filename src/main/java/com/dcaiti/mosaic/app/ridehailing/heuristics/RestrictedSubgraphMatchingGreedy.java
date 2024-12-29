@@ -147,11 +147,11 @@ public class RestrictedSubgraphMatchingGreedy {
 
         // Update rides, stops, and routes
         allRides.get(shuttleId).add(passenger);
-        getOrderOfStops(passenger, shuttle);
+        updateStops(passenger, shuttle);
         updateRoutes(shuttle);
     }
 
-    private static void getOrderOfStops(Ride passenger, VehicleStatus shuttle) {
+    private static void updateStops(Ride passenger, VehicleStatus shuttle) {
         Ride currentRide = shuttle.getCurrentRides().get(0);
         CartesianPoint rideOrigin = getCartesianPoint(currentRide.getPickupLocation());
         CartesianPoint rideDestination = getCartesianPoint(currentRide.getDropoffLocation());
@@ -224,6 +224,7 @@ public class RestrictedSubgraphMatchingGreedy {
             getCartesianPoint(passenger.getDropoffLocation()), passenger.getDropoffLocation()
         );
     
+        // Add new stops
         points.forEach(point -> {
             if (tmp.containsKey(point)) stops.add(tmp.get(point));
         });
