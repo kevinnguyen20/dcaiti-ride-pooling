@@ -20,6 +20,8 @@ public final class RoutingUtils {
 
     private static final int MAX_TRIES_CHANGE_STOP_POSITION = 10;
 
+    private RoutingUtils() {}
+
     public static CandidateRoute getBestRoute(IRoadPosition start, IRoadPosition target) {
         RoutingPosition routingStart = new RoutingPosition(centerOf(start.getConnection()), null, start.getConnectionId());
         RoutingPosition routingTarget = new RoutingPosition(centerOf(target.getConnection()), null, target.getConnectionId());
