@@ -11,6 +11,8 @@ import com.dcaiti.mosaic.app.ridehailing.utils.server.RideProvider;
 
 public class RidePoolingServiceApp extends
     AbstractRidePoolingServiceApp<CRidePoolingServiceApp> {
+
+    private final int heuristicMode = 1;
     public RidePoolingServiceApp() {
         super(CRidePoolingServiceApp.class);
     }
@@ -22,9 +24,10 @@ public class RidePoolingServiceApp extends
 
     @Override
     protected void assignBookingsToShuttles(List<Ride> newBookings) {
-        // Vehicle capacity of 2
-        // RestrictedSubgraphMatchingSimple.assignBookingsToShuttles(storedRides, registeredShuttles, newBookings, rides, stops, routes);
-        RestrictedSubgraphMatchingGreedy.assignBookingsToShuttles(storedRides, registeredShuttles, newBookings, rides, stops, routes);
+        switch(heuristicMode) {
+            case 0 -> RestrictedSubgraphMatchingSimple.assignBookingsToShuttles(storedRides, registeredShuttles, newBookings, rides, stops, routes);
+            case 1 -> RestrictedSubgraphMatchingGreedy.assignBookingsToShuttles(storedRides, registeredShuttles, newBookings, rides, stops, routes);
+        }
     }
 
     @Override
