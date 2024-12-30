@@ -153,7 +153,7 @@ public abstract class AbstractRidePoolingVehicleApp<ConfigT extends CAbstractRid
         getLog().warn("Shuttle's capacity reached. Declining ride.");
         ride.setStatus(Ride.Status.DECLINED);
         declinedRides.add(ride);
-        System.err.println("Ride declined");
+        System.err.println("Ride declined: " + ride.getBookingId());
         System.err.println();
     }
 

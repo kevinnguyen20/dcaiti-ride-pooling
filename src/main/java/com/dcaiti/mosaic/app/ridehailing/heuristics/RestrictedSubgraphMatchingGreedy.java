@@ -81,7 +81,7 @@ public class RestrictedSubgraphMatchingGreedy {
 
                 if (isInsideEllipse(shuttleOrigin, shuttleDestination, passengerOrigin)) {
                     if (isInsideEllipse(passengerOrigin, passengerDestination, shuttleOrigin)) {
-                        double distance = distance(passengerOrigin, RoutingUtils.centerOf(shuttlePositionOnRoad.getConnection()).toCartesian());
+                        double distance = HeuristicsUtils.distance(passengerOrigin, RoutingUtils.centerOf(shuttlePositionOnRoad.getConnection()).toCartesian());
 
                         if (distance < shortestDistance) {
                             shortestDistance = distance;
@@ -89,8 +89,8 @@ public class RestrictedSubgraphMatchingGreedy {
                         }
 
                         return;
-                    } else if (isInsideEllipse(shuttleOrigin, shuttleDestination, passengerDestination) && distance(passengerDestination, shuttleDestination) < distance(passengerOrigin, shuttleDestination)) {
-                        double distance = distance(passengerOrigin, RoutingUtils.centerOf(shuttlePositionOnRoad.getConnection()).toCartesian());
+                    } else if (isInsideEllipse(shuttleOrigin, shuttleDestination, passengerDestination) && HeuristicsUtils.distance(passengerDestination, shuttleDestination) < HeuristicsUtils.distance(passengerOrigin, shuttleDestination)) {
+                        double distance = HeuristicsUtils.distance(passengerOrigin, RoutingUtils.centerOf(shuttlePositionOnRoad.getConnection()).toCartesian());
 
                         if (distance < shortestDistance) {
                             shortestDistance = distance;
@@ -126,9 +126,9 @@ public class RestrictedSubgraphMatchingGreedy {
     }
 
     private static boolean isInsideEllipse(CartesianPoint pickup, CartesianPoint dropoff, CartesianPoint testPoint) {
-        double distanceToPickup = distance(pickup, testPoint);
-        double distanceToDropoff = distance(dropoff, testPoint);
-        double distanceTrip = distance(pickup, dropoff);
+        double distanceToPickup = HeuristicsUtils.distance(pickup, testPoint);
+        double distanceToDropoff = HeuristicsUtils.distance(dropoff, testPoint);
+        double distanceTrip = HeuristicsUtils.distance(pickup, dropoff);
         
         // Convert meter to kilometer
         return distanceToPickup + distanceToDropoff <= distanceTrip + (Math.sqrt(distanceTrip / 1000.0) * 1000);
@@ -176,7 +176,7 @@ public class RestrictedSubgraphMatchingGreedy {
                 tmp.add(i, passengerOrigin);
                 tmp.add(j + 1, passengerDestination);
 
-                double distance = getTotalDistance(tmp);
+                double distance = HeuristicsUtils.getTotalDistance(tmp);
                 if (distance < minDistance) {
                     minDistance = distance;
                     result = new ArrayList<>(tmp);
@@ -198,19 +198,9 @@ public class RestrictedSubgraphMatchingGreedy {
         // Set road positions for upcoming stops
         RoutingUtils.addPositionOnRoad(pickup, shuttlePositionOnRoad);
         
-        return distance(
+        return HeuristicsUtils.distance(
             RoutingUtils.centerOf(pickup.getPositionOnRoad().getConnection()).toCartesian(),
             RoutingUtils.centerOf(shuttlePositionOnRoad.getConnection()).toCartesian());
-    }
-
-    private static double getTotalDistance(List<CartesianPoint> result) {
-        return distance(result.get(0), result.get(1))
-            + distance(result.get(1), result.get(2))
-            + distance(result.get(2), result.get(3));
-    }
-
-    private static double distance(CartesianPoint p1, CartesianPoint p2) {
-        return Math.sqrt(Math.pow(p2.getX() - p1.getX(), 2) + Math.pow(p2.getY() - p1.getY(), 2));
     }
 
     private static void convertToVehicleStops(List<CartesianPoint> points, Ride currentRide, Ride passenger, VehicleStatus shuttle) {
