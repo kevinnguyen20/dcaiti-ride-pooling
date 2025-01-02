@@ -73,7 +73,14 @@ public abstract class AbstractRidePoolingServiceApp<ConfigT>
         // Update statuses and collect new bookings
         List<Ride> newBookings = storedRides.values().parallelStream()
             .peek(ride -> {
+                // Reset ride status if it was declined
                 if (ride.getStatus() == Ride.Status.DECLINED) ride.setStatus(Ride.Status.PENDING);
+
+                // Remove rejected rides from list of active rides
+                storedRides.remove(ride.getBookingId());
+
+                // Archive ride
+                archivedRides.put(ride.getBookingId(), ride);
             })
             .filter(ride -> ride.getStatus() == Ride.Status.PENDING)
             .sorted(Comparator.comparingLong(Ride::getCreationTime))
