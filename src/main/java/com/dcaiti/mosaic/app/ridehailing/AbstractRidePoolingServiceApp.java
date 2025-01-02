@@ -43,6 +43,9 @@ public abstract class AbstractRidePoolingServiceApp<ConfigT>
     protected static Map<String, Queue<VehicleStop>> stops = new HashMap<>();
     // List of routes for each vehicle (sorted)
     protected static Map<String, Queue<CandidateRoute>> routes = new HashMap<>();
+
+    // List of archived rides (bookingId:Ride)
+    protected static Map<Integer, Ride> archivedRides = new HashMap<>();
     
     protected AbstractRidePoolingServiceApp(Class<ConfigT> configClass) {
         super(configClass);
@@ -102,12 +105,25 @@ public abstract class AbstractRidePoolingServiceApp<ConfigT>
         // Declined rides
         shuttleStatusMsg.getDeclinedRides().forEach(declinedRide -> {
             Ride storedRide = storedRides.get(declinedRide.getBookingId());
+
+            // Update ride status
             getLog().infoSimTime(this, "Shuttle {} declined ride booking {}", shuttle.getVehicleId(), declinedRide.getBookingId());
             storedRide.setStatus(Ride.Status.PENDING);
             storedRide.setPickupTime(0);
             storedRide.setDropOffTime(0);
             storedRide.incrementNumberOfRejections();
             storedRide.setAssignedVehicleId(null);
+
+            // Reject ride if it exceeds limit
+            if (storedRide.getNumberOfRejections() > 120) {
+                storedRide.setStatus(Ride.Status.REJECTED);
+
+                // Remove ride from list of active rides
+                storedRides.remove(declinedRide.getBookingId());
+
+                // Archive ride
+                archivedRides.put(declinedRide.getBookingId(), declinedRide);
+            }
         });
 
         // Finished rides
@@ -116,10 +132,19 @@ public abstract class AbstractRidePoolingServiceApp<ConfigT>
             getLog().infoSimTime(this, "Vehicle {} completed ride booking {}.", storedRide.getAssignedVehicleId(), storedRide.getBookingId());
 
             if (finishedRide.getStatus() == Ride.Status.DROPPED_OFF && storedRide.getDropOffTime() == 0) {
+                // Update ride status
                 storedRide.setStatus(finishedRide.getStatus());
-                registeredShuttles.get(shuttle.getVehicleId()).getCurrentRides().remove(finishedRide);
                 storedRide.setDropOffTime(getOs().getSimulationTime());
                 onVehicleRideDropoff(storedRide);
+
+                // Remove ride from the shuttle's list of current rides
+                registeredShuttles.get(shuttle.getVehicleId()).getCurrentRides().remove(finishedRide);
+
+                // Remove ride from list of active rides
+                storedRides.remove(finishedRide.getBookingId());
+
+                // Archive finished ride
+                archivedRides.put(finishedRide.getBookingId(), finishedRide);
             }
         });
 
