@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.mosaic.fed.application.ambassador.simulation.communication.CamBuilder;
 import org.eclipse.mosaic.fed.application.ambassador.simulation.communication.ReceivedAcknowledgement;
@@ -33,7 +34,7 @@ public abstract class AbstractRidePoolingServiceApp<ConfigT>
 
     private RideProvider rideProvider;
     // Mapping of RideId:Ride, information stored on dispatcher's side
-    protected static final Map<Integer, Ride> storedRides = new HashMap<>();
+    protected static final Map<Integer, Ride> storedRides = new ConcurrentHashMap<>();
     // Mapping of VehicleId:Vehicle, information received from shuttles
     protected final Map<String, VehicleStatus> registeredShuttles = new HashMap<>();
 
@@ -75,16 +76,18 @@ public abstract class AbstractRidePoolingServiceApp<ConfigT>
             .peek(ride -> {
                 // Reset ride status if it was declined
                 if (ride.getStatus() == Ride.Status.DECLINED) ride.setStatus(Ride.Status.PENDING);
-
-                // Remove rejected rides from list of active rides
-                storedRides.remove(ride.getBookingId());
-
-                // Archive ride
-                archivedRides.put(ride.getBookingId(), ride);
             })
             .filter(ride -> ride.getStatus() == Ride.Status.PENDING)
             .sorted(Comparator.comparingLong(Ride::getCreationTime))
             .toList();
+
+        // Remove rejected rides from list of active rides and archive it
+        for (Ride ride : storedRides.values()) {
+            if (ride.getStatus() == Ride.Status.REJECTED) {
+                storedRides.remove(ride.getBookingId());
+                archivedRides.put(ride.getBookingId(), ride);
+            }
+        }
         
         // Assign new bookings to shuttles
         if (!newBookings.isEmpty()) assignBookingsToShuttles(newBookings);
