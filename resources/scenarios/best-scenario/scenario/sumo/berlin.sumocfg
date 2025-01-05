@@ -28,4 +28,6 @@
         <random value="false"/>
     </random_number>
 
+    <gui-settings-file value="berlin.viewsettings.xml" />
+
 </configuration>
