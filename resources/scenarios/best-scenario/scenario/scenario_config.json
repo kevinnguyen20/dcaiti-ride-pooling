@@ -1,7 +1,7 @@
 {
     "simulation": {
         "id": "BeST-MOSAIC",
-        "duration": "2h",
+        "duration": "24h",
         "randomSeed": 268965854,
         "projection": {
             "centerCoordinates": {
@@ -28,6 +28,6 @@
         "cell": true,
         "sns": false,
         "sumo": true,    
-        "output": true
+        "output": false
     }
 }
