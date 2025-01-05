@@ -62,6 +62,7 @@ public class RestrictedSubgraphMatchingSimple {
                     HeuristicsUtils.checkForDuplicateCoordinates(shuttle, passenger) ||
                     HeuristicsUtils.hasIdenticalPickupAndDropoff(shuttle, passenger)) {
                     passenger.setStatus(Ride.Status.REJECTED);
+                    return;
                 }
                 
                 // Shuttles with enough capacity which are en-route only have
@@ -198,7 +199,7 @@ public class RestrictedSubgraphMatchingSimple {
     private static void convertToVehicleStops(List<CartesianPoint> points, Ride currentRide, Ride passenger, VehicleStatus shuttle) {
         String shuttleId = shuttle.getVehicleId();
         Queue<VehicleStop> stops = currentStops.get(shuttleId);
-    
+
         Map<CartesianPoint, VehicleStop> tmp = Map.of(
             HeuristicsUtils.getCartesianPoint(currentRide.getPickupLocation()), currentRide.getPickupLocation(),
             HeuristicsUtils.getCartesianPoint(currentRide.getDropoffLocation()), currentRide.getDropoffLocation(),
