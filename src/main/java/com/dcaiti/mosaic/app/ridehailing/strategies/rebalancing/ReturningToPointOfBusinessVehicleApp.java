@@ -183,6 +183,13 @@ public class ReturningToPointOfBusinessVehicleApp extends ConfigurableApplicatio
         if (currentPlannedStop != null) getOs().stop(currentPlannedStop.getPositionOnRoad(), stopMode, 0);
 
         currentRoute = currentRoutes.peek();
+
+        // Calculate route if given route not available
+        if (currentRoute == null) {
+            currentRoute = getNewCurrentRoute(currentStops.peek().getPositionOnRoad().getConnection());
+        }
+
+        // Update stop and route information
         getOs().getNavigationModule().switchRoute(currentRoute);
         currentPlannedStop = currentStops.peek();
         getOs().stop(currentPlannedStop.getPositionOnRoad(), stopMode, Long.MAX_VALUE);
