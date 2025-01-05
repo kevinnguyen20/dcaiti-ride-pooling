@@ -1,5 +1,5 @@
 {
-    "sumoConfigurationFile": "charlottenburg.sumocfg",
+    "sumoConfigurationFile": "berlin.sumocfg",
     "updateInterval": "1s",
     "additionalSumoParameters": "--time-to-teleport 120 --ignore-junction-blocker 20 --time-to-teleport.highways 0 --fcd-output //home/kevinnguyen/master-thesis-git/plots/fcd-output-geo.xml --fcd-output.geo --tripinfo-output /home/kevinnguyen/master-thesis-git/plots/tripinfo-output.xml",
     "subscribeToAllVehicles": false,
