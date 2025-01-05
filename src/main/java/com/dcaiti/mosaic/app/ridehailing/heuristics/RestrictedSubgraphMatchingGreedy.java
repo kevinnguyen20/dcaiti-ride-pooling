@@ -60,6 +60,15 @@ public class RestrictedSubgraphMatchingGreedy {
             shortestDistance = Double.MAX_VALUE;
             
             vehicleEnroute.forEach(shuttle -> {
+                // Check duplicate locations
+                if (passenger.getStatus() == Ride.Status.REJECTED || 
+                    HeuristicsUtils.checkForDuplicateCoordinates(shuttle, passenger) || 
+                    HeuristicsUtils.hasIdenticalPickupAndDropoff(shuttle, passenger)) {
+
+                    passenger.setStatus(Ride.Status.REJECTED);
+                    return;
+                }
+
                 // Shuttles with enough capacity which are en-route only have
                 // max. 1 passenger
                 Ride currentRide = shuttle.getCurrentRides().get(0);
@@ -206,7 +215,7 @@ public class RestrictedSubgraphMatchingGreedy {
     private static void convertToVehicleStops(List<CartesianPoint> points, Ride currentRide, Ride passenger, VehicleStatus shuttle) {
         String shuttleId = shuttle.getVehicleId();
         Queue<VehicleStop> stops = currentStops.get(shuttleId);
-    
+
         Map<CartesianPoint, VehicleStop> tmp = Map.of(
             HeuristicsUtils.getCartesianPoint(currentRide.getPickupLocation()), currentRide.getPickupLocation(),
             HeuristicsUtils.getCartesianPoint(currentRide.getDropoffLocation()), currentRide.getDropoffLocation(),
@@ -255,7 +264,8 @@ public class RestrictedSubgraphMatchingGreedy {
         List<VehicleStop> tmp = (LinkedList<VehicleStop>) stops;
 
         // Add the first route from shuttle to the first stop
-        currentRoutes.get(shuttle.getVehicleId()).add(RoutingUtils.getBestRoute(shuttlePositionOnRoad, tmp.get(0).getPositionOnRoad()));
+        CandidateRoute route = RoutingUtils.getBestRoute(shuttlePositionOnRoad, tmp.get(0).getPositionOnRoad());
+        currentRoutes.get(shuttle.getVehicleId()).add(route);
 
         // Add the routes between upcoming stops
         for (int i = 0; i < stops.size() - 1; i++) {
