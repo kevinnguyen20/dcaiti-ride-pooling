@@ -39,9 +39,9 @@ public final class HeuristicsUtils {
         );
 
         CartesianPoint pickupLocationCartesian = getCartesianPoint(booking.getPickupLocation());
-        CartesianPoint dropoffLocCartesianPoint = getCartesianPoint(booking.getDropoffLocation());
+        CartesianPoint dropoffLocationCartesian = getCartesianPoint(booking.getDropoffLocation());
 
-        return hasSameCartesianCoordinates(pickupLocationCartesian, dropoffLocCartesianPoint) ||    
+        return hasSameCartesianCoordinates(pickupLocationCartesian, dropoffLocationCartesian) ||    
             hasSameConnectionId(booking.getPickupLocation(), booking.getDropoffLocation());
     }
 
