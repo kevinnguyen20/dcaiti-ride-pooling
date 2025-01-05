@@ -24,7 +24,7 @@
           "route": "1",
           "pos": 220,
           "flow": 3600,
-          "maxNumberVehicles": 4,
+          "maxNumberVehicles": 1000,
           "types": [
               { "name": "Taxi" }
           ]
