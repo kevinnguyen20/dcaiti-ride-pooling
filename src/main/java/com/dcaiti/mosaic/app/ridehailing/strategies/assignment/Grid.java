@@ -17,22 +17,18 @@ public class Grid {
     private static List<VehicleStatus> candidateShuttles = new LinkedList<>();
     // Map: coordinates to list of shuttles
     private static Map<String, List<VehicleStatus>> grid = new HashMap<>();
-
     private static List<VehicleStatus> listOfShuttlesOnCurrentSearchLevel;
     
-    // TODO: test this method
-    public static Map<String, List<VehicleStatus>> createGridFromShuttlePositions(Map<String, VehicleStatus> registeredShuttles) {
+    public static void createGridFromShuttlePositions(List<VehicleStatus> registeredShuttles) {
         candidateShuttles.clear();
         grid.clear();
 
-        registeredShuttles.values().forEach(shuttle -> {
+        registeredShuttles.forEach(shuttle -> {
             // Fail-safe
             if (shuttle.hasEnoughCapacity()) candidateShuttles.add(shuttle);
         });
 
         assignShuttleToGridCell();
-
-        return grid;
     }
 
     private static void assignShuttleToGridCell() {
@@ -62,23 +58,26 @@ public class Grid {
         return num < 0 ? num - 1 : num;
     }
 
-    // TODO: test this method
-    public static VehicleStatus getShuttle(Ride passenger, int searchLevel) {
+    public static List<VehicleStatus> getShuttles(Ride passenger, int searchLevel) {
         // Extract shuttles from the current search level
         getShuttlesOnCurrentSearchLevel(passenger, searchLevel);
 
         // Limit the number of candidate shuttles, other methods possible
         Collections.shuffle(listOfShuttlesOnCurrentSearchLevel);
-        List<VehicleStatus> finalListOfCandidateShuttles = listOfShuttlesOnCurrentSearchLevel.stream().limit(5).toList();
+        List<VehicleStatus> finalListOfCandidateShuttles = listOfShuttlesOnCurrentSearchLevel.stream()
+            .filter(VehicleStatus::hasEnoughCapacity)
+            .limit(5)
+            .toList();
         
         // Handle edge cases
-        if (finalListOfCandidateShuttles.isEmpty()) return null;
-        if (finalListOfCandidateShuttles.size() == 1) return finalListOfCandidateShuttles.get(0);
+        // if (finalListOfCandidateShuttles.isEmpty()) return null;
+        // if (finalListOfCandidateShuttles.size() == 1) return finalListOfCandidateShuttles.get(0);
 
         // Get the closest shuttle on the current search level
-        VehicleStatus closestShuttle = getClosestShuttle(passenger, finalListOfCandidateShuttles);
+        // VehicleStatus closestShuttle = getClosestShuttle(passenger, finalListOfCandidateShuttles);
 
-        return closestShuttle;
+        return finalListOfCandidateShuttles;
+        // return closestShuttle;
     }
 
     private static void getShuttlesOnCurrentSearchLevel(Ride passenger, int searchLevel) {
