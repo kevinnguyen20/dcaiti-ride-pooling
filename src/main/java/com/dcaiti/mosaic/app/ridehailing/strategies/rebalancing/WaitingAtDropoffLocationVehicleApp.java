@@ -38,6 +38,7 @@ public class WaitingAtDropoffLocationVehicleApp extends ConfigurableApplication<
     private VehicleStop pointOfBusiness = null;
     private boolean driveToFirstStop = true;
     private CandidateRoute currentRoute = null;
+    private String currentRouteId = null;
 
     private Queue<VehicleStop> currentStops;
     private Queue<CandidateRoute> currentRoutes;
@@ -69,6 +70,15 @@ public class WaitingAtDropoffLocationVehicleApp extends ConfigurableApplication<
 
         // If waiting for new requests, continue waiting
         if (waitingForResume) return;
+
+        // Check if route switch successful
+        if (currentRouteId != null && !currentRouteId.equals(updatedVehicleData.getRouteId())) {
+            currentRoute = getNewCurrentRoute(currentStops.peek().getPositionOnRoad().getConnection());
+            currentPlannedStop = null;
+            getOs().getNavigationModule().switchRoute(currentRoute);
+            currentRouteId = getOs().getNavigationModule().getCurrentRoute().getId();
+            removeDeprecatedRoute();
+        }
 
         // Handle arrival at first stop if new orders are present
         if (driveToFirstStop && !currentStops.isEmpty()) {
@@ -143,7 +153,7 @@ public class WaitingAtDropoffLocationVehicleApp extends ConfigurableApplication<
         }
 
         // Cancel current stop
-        if (currentPlannedStop != null) getOs().stop(currentPlannedStop.getPositionOnRoad(), stopMode, 0);
+        // if (currentPlannedStop != null) getOs().stop(currentPlannedStop.getPositionOnRoad(), stopMode, 0);
 
         // Calculate route if given route not available
         currentRoute = currentRoutes.peek();
@@ -153,6 +163,7 @@ public class WaitingAtDropoffLocationVehicleApp extends ConfigurableApplication<
 
         // Update stop and route information
         getOs().getNavigationModule().switchRoute(currentRoute);
+        currentRouteId = getOs().getNavigationModule().getCurrentRoute().getId();
         currentPlannedStop = currentStops.peek();
         getOs().stop(currentPlannedStop.getPositionOnRoad(), stopMode, Long.MAX_VALUE);
     }
@@ -180,6 +191,7 @@ public class WaitingAtDropoffLocationVehicleApp extends ConfigurableApplication<
             } else currentRoute = route;
             
             getOs().getNavigationModule().switchRoute(currentRoute);
+            currentRouteId = getOs().getNavigationModule().getCurrentRoute().getId();
         }
     }
 

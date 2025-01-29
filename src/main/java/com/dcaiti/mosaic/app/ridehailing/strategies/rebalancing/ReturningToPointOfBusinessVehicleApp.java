@@ -40,6 +40,7 @@ public class ReturningToPointOfBusinessVehicleApp extends ConfigurableApplicatio
     private VehicleStop pointOfBusiness = null;
     private boolean driveToFirstStop = true;
     private CandidateRoute currentRoute = null;
+    private String currentRouteId = null;
     private long lastStoppedAt;
 
     private Queue<VehicleStop> currentStops;
@@ -85,12 +86,14 @@ public class ReturningToPointOfBusinessVehicleApp extends ConfigurableApplicatio
             driveToPointOfBusiness();
         }
 
-        // Drive to point of business if idle (in theory, not implemented yet)
-        // String currentRouteId = getOs().getNavigationModule().getCurrentRoute().getId();
-        // if (currentRouteId != null && !currentRouteId.equals(updatedVehicleData.getRouteId())) {
-        //     currentPlannedStop = pointOfBusiness;
-        //     driveToFirstStop = true;
-        // }
+        // Check if route switch successful
+        if (currentRouteId != null && !currentRouteId.equals(updatedVehicleData.getRouteId())) {
+            currentRoute = getNewCurrentRoute(currentStops.peek().getPositionOnRoad().getConnection());
+            currentPlannedStop = null;
+            getOs().getNavigationModule().switchRoute(currentRoute);
+            currentRouteId = getOs().getNavigationModule().getCurrentRoute().getId();
+            removeDeprecatedRoute();
+        }
 
         // Handle arrival at first stop if new orders are present
         if (driveToFirstStop && !currentStops.isEmpty()) {
@@ -180,17 +183,18 @@ public class ReturningToPointOfBusinessVehicleApp extends ConfigurableApplicatio
         }
 
         // Cancel current stop
-        if (currentPlannedStop != null) getOs().stop(currentPlannedStop.getPositionOnRoad(), stopMode, 0);
+        // if (currentPlannedStop != null) getOs().stop(currentPlannedStop.getPositionOnRoad(), stopMode, 0);
 
-        currentRoute = currentRoutes.peek();
-
+        
         // Calculate route if given route not available
+        currentRoute = currentRoutes.peek();
         if (currentRoute == null) {
             currentRoute = getNewCurrentRoute(currentStops.peek().getPositionOnRoad().getConnection());
         }
 
         // Update stop and route information
         getOs().getNavigationModule().switchRoute(currentRoute);
+        currentRouteId = getOs().getNavigationModule().getCurrentRoute().getId();
         currentPlannedStop = currentStops.peek();
         getOs().stop(currentPlannedStop.getPositionOnRoad(), stopMode, Long.MAX_VALUE);
     }
@@ -218,6 +222,7 @@ public class ReturningToPointOfBusinessVehicleApp extends ConfigurableApplicatio
             } else currentRoute = route;
             
             getOs().getNavigationModule().switchRoute(currentRoute);
+            currentRouteId = getOs().getNavigationModule().getCurrentRoute().getId();
         }
     }
 
