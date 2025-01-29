@@ -17,11 +17,15 @@ public class RidePoolingVehicleApp extends AbstractRidePoolingVehicleApp<CAbstra
     }
 
     @Override
-    protected void onPickup(Ride ride) {}
+    protected void onPickup(Ride ride) {
+        ride.setStartDistance(getOs().getNavigationModule().getVehicleData().getDistanceDriven());
+    }
 
     @Override
     protected void onDropOff(Ride ride) {
         currentRides.remove(ride);
         finishedRides.add(ride);
+
+        ride.setEndDistance(getOs().getNavigationModule().getVehicleData().getDistanceDriven());
     }
 }

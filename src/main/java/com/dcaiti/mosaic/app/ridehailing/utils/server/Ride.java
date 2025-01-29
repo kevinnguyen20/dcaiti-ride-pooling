@@ -28,11 +28,13 @@ public class Ride implements Serializable {
 
     private long creationTime;
     private long deadline;
+    private long matchingTime;
     private long pickupTime;
     private long dropOffTime;
     private long maxDetourTime;
 
-    private double totalDistance;
+    private double startDistance;
+    private double endDistance;
 
     private int numberOfRejections;
 
@@ -89,6 +91,10 @@ public class Ride implements Serializable {
         return deadline;
     }
 
+    public long getMatchingTime() {
+        return matchingTime;
+    }
+
     public long getPickupTime() {
         return pickupTime;
     }
@@ -101,8 +107,12 @@ public class Ride implements Serializable {
         return maxDetourTime;
     }
 
-    public double getTotalDistance() {
-        return totalDistance;
+    public double getStartDistance() {
+        return startDistance;
+    }
+
+    public double getEndDistance() {
+        return endDistance;
     }
 
     public int getNumberOfRejections() {
@@ -125,6 +135,10 @@ public class Ride implements Serializable {
         this.deadline = deadline;
     }
 
+    public void setMatchingTime(long matchingTime) {
+        this.matchingTime = matchingTime;
+    }
+
     public void setPickupTime(long pickupTime) {
         this.pickupTime = pickupTime;
     }
@@ -137,8 +151,12 @@ public class Ride implements Serializable {
         this.maxDetourTime = maxDetourTime;
     }
 
-    public void setTotalDistance(double totalDistance) {
-        this.totalDistance = totalDistance;
+    public void setStartDistance(double startDistance) {
+        this.startDistance = startDistance;
+    }
+
+    public void setEndDistance(double endDistance) {
+        this.endDistance = endDistance;
     }
 
     public void incrementNumberOfRejections() {
