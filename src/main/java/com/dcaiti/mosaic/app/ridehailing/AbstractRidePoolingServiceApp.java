@@ -7,6 +7,8 @@ import com.dcaiti.mosaic.app.ridehailing.utils.server.RideProvider;
 import com.dcaiti.mosaic.app.ridehailing.utils.server.VehicleStatus;
 import com.dcaiti.mosaic.app.ridehailing.utils.vehicle.VehicleStop;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -98,6 +100,7 @@ public abstract class AbstractRidePoolingServiceApp<ConfigT>
             .forEach(booking -> {
                 String shuttleId = booking.getAssignedVehicleId();
                 getLog().infoSimTime(this, "Assigned ride booking {} to shuttle {}", booking.getBookingId(), shuttleId);
+                booking.setMatchingTime(getOs().getSimulationTime());
                 sendRideBookingMessage(shuttleId, booking);
             });
 
@@ -139,6 +142,11 @@ public abstract class AbstractRidePoolingServiceApp<ConfigT>
         // Finished rides
         shuttleStatusMsg.getFinishedRides().forEach(finishedRide -> {
             Ride storedRide = storedRides.get(finishedRide.getBookingId());
+            if (storedRide == null) {
+                getLog().infoSimTime(this, "Error occurred for ride booking {} and vehicle {}", finishedRide.getBookingId(), finishedRide.getAssignedVehicleId());
+
+                return;
+            }
             getLog().infoSimTime(this, "Vehicle {} completed ride booking {}.", storedRide.getAssignedVehicleId(), storedRide.getBookingId());
 
             if (finishedRide.getStatus() == Ride.Status.DROPPED_OFF && storedRide.getDropOffTime() == 0) {
@@ -183,7 +191,35 @@ public abstract class AbstractRidePoolingServiceApp<ConfigT>
     }
 
     @Override
+    
     public void onShutdown() {
+        String filePathRide = "rideInfo.txt";
+        String filePathShuttle = "shuttleInfo.txt";
+
+        try (FileWriter writer = new FileWriter(filePathRide)) {
+            for (Ride ride : archivedRides.values()) {
+                String rideInfo = ride.getBookingId() + ", " +
+                    ride.getCreationTime() + ", " +
+                    ride.getMatchingTime() + ", " +
+                    ride.getPickupTime() + ", " +
+                    ride.getDropOffTime() + ", " +
+                    ride.getPickupLocation().getGeoPoint() + ", " +
+                    ride.getDropoffLocation().getGeoPoint();
+                writer.write(rideInfo + System.lineSeparator());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try (FileWriter writer = new FileWriter(filePathShuttle)) {
+            for (VehicleStatus shuttle : registeredShuttles.values()) {
+                String shuttleInfo = shuttle.getVehicleId() + ", " +
+                    shuttle.getTotalDistanceDriven();
+                writer.write(shuttleInfo + System.lineSeparator());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
