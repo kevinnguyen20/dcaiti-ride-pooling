@@ -39,6 +39,7 @@ public class InsertionHeuristic {
         List<VehicleStatus> shuttles = FleetManagement.getAllShuttlesWithEnoughCapacity(registeredShuttles);
 
         newBookings.forEach(booking -> {
+            // Decline booking if not shuttles are available
             if (shuttles.isEmpty()) {
                 booking.setStatus(Ride.Status.DECLINED);
                 return;
@@ -47,7 +48,16 @@ public class InsertionHeuristic {
             // Retrieve a random shuttle (other strategies possible/recommended)
             Random random = new Random();
             int randomIndex = random.nextInt(shuttles.size());
-            VehicleStatus shuttle = shuttles.get(randomIndex);
+            VehicleStatus shuttle = shuttles.get(0);
+
+            // Check for duplicate locations
+            if (booking.getStatus() == Ride.Status.REJECTED ||
+                HeuristicsUtils.checkForDuplicateCoordinates(shuttle, booking) ||
+                HeuristicsUtils.hasIdenticalPickupAndDropoff(shuttle, booking)) {
+
+                booking.setStatus(Ride.Status.REJECTED);
+                return;
+            }
 
             String shuttleId = shuttle.getVehicleId();
             allRides.putIfAbsent(shuttleId, new LinkedList<>());
@@ -63,8 +73,8 @@ public class InsertionHeuristic {
             // Update stops
             updateStops(booking, shuttle);
 
-            // Remove shuttle if capacity limit is reached
-            if (!(shuttle.getCurrentRides().size() + 1 < FleetManagement.SHUTTLE_CAPACITY)) shuttles.remove(shuttle);
+            // Remove shuttle after assignment
+            shuttles.remove(0);
 
             // Update routes
             updateRoutes(shuttle);
@@ -144,6 +154,7 @@ public class InsertionHeuristic {
         // Add the routes between upcoming stops
         for (int i = 0; i < stops.size() - 1; i++) {
             CandidateRoute c = RoutingUtils.getBestRoute(tmp.get(i).getPositionOnRoad(), tmp.get(i + 1).getPositionOnRoad());
+
             currentRoutes.get(shuttle.getVehicleId()).add(c);
         }
     }
