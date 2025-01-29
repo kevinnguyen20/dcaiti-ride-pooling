@@ -97,7 +97,6 @@ public class RestrictedSubgraphMatchingGreedy {
                             candidateShuttle = shuttle;
                         }
 
-                        return;
                     } else if (isInsideEllipse(shuttleOrigin, shuttleDestination, passengerDestination) && HeuristicsUtils.distance(passengerDestination, shuttleDestination) < HeuristicsUtils.distance(passengerOrigin, shuttleDestination)) {
                         double distance = HeuristicsUtils.distance(passengerOrigin, RoutingUtils.centerOf(shuttlePositionOnRoad.getConnection()).toCartesian());
 
@@ -105,8 +104,6 @@ public class RestrictedSubgraphMatchingGreedy {
                             shortestDistance = distance;
                             candidateShuttle = shuttle;
                         }
-                        
-                        return;
                     }
                 };
             });
