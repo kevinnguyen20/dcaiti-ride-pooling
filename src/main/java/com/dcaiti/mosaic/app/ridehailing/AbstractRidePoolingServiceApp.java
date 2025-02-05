@@ -69,18 +69,17 @@ public abstract class AbstractRidePoolingServiceApp<ConfigT>
     private void checkPendingBookings() {
         if (isTornDown()) return;
 
-        // Fetch and store new ride bookings
+        // Fetch and store new ride bookings        
         rideProvider.findNewRides(getOs().getSimulationTime())
             .forEach(booking -> storedRides.put(booking.getBookingId(), booking));
 
-        // Update statuses and collect new bookings
+        // Update statuses and collect new bookings        
         List<Ride> newBookings = storedRides.values().parallelStream()
             .peek(ride -> {
                 // Reset ride status if it was declined
                 if (ride.getStatus() == Ride.Status.DECLINED) ride.setStatus(Ride.Status.PENDING);
             })
             .filter(ride -> ride.getStatus() == Ride.Status.PENDING)
-            .sorted(Comparator.comparingLong(Ride::getCreationTime))
             .toList();
 
         // Remove rejected rides from list of active rides and archive it
@@ -91,10 +90,10 @@ public abstract class AbstractRidePoolingServiceApp<ConfigT>
             }
         }
         
-        // Assign new bookings to shuttles
+        // Assign new bookings to shuttles        
         if (!newBookings.isEmpty()) assignBookingsToShuttles(newBookings);
 
-        // Notify shuttles of assigned bookings
+        // Notify shuttles of assigned bookings        
         newBookings.stream()
             .filter(booking -> booking.getStatus() == Ride.Status.ASSIGNED)
             .forEach(booking -> {

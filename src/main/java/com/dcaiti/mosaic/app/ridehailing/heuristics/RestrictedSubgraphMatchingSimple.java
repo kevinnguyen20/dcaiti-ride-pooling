@@ -46,7 +46,7 @@ public class RestrictedSubgraphMatchingSimple {
         vehicleEnroute = new LinkedList<>();
         vehicleIdle = new LinkedList<>();
 
-        // Create lists of idle vehicles and vehicles en route
+        // Create lists of idle vehicles and vehicles en route        
         Map<String, List<VehicleStatus>> vehicleFleet = FleetManagement.analyzeFleet(registeredShuttles);
         vehicleEnroute = FleetManagement.getPartlyOccupiedShuttles(vehicleFleet);
         vehicleIdle = FleetManagement.getIdleShuttles(vehicleFleet);
@@ -59,8 +59,7 @@ public class RestrictedSubgraphMatchingSimple {
             vehicleEnroute.forEach(shuttle -> {
                 // Check duplicate locations
                 if (passenger.getStatus() == Ride.Status.REJECTED ||
-                    HeuristicsUtils.checkForDuplicateCoordinates(shuttle, passenger) ||
-                    HeuristicsUtils.hasIdenticalPickupAndDropoff(shuttle, passenger)) {
+                    HeuristicsUtils.checkForDuplicateCoordinates(shuttle, passenger)) {
                     passenger.setStatus(Ride.Status.REJECTED);
                     return;
                 }
@@ -71,7 +70,7 @@ public class RestrictedSubgraphMatchingSimple {
                 CartesianPoint shuttleOrigin = HeuristicsUtils.getCartesianPoint(currentRide.getPickupLocation());
                 CartesianPoint shuttleDestination = HeuristicsUtils.getCartesianPoint(currentRide.getDropoffLocation());
 
-                // Determine the shuttle position on the road
+                // Determine the shuttle position on the road                
                 IRoadPosition shuttlePositionOnRoad = RoutingUtils.getClosestRoadPosition(shuttle.getCurrentPosition());
 
                 // If passenger is already picked up, set origin of current ride
@@ -99,9 +98,7 @@ public class RestrictedSubgraphMatchingSimple {
 
             // Assign idle vehicle to passenger
             if (candidateShuttle == null && !vehicleIdle.isEmpty()) {
-                VehicleStatus candidateShuttleIdle = vehicleIdle.stream()
-                    .min(Comparator.comparingDouble(shuttle -> getDistanceToIdleShuttle(pickup, shuttle.getCurrentPosition())))
-                    .orElse(null);
+                VehicleStatus candidateShuttleIdle = vehicleIdle.remove(0);
 
                 if (candidateShuttleIdle != null) {
                     assignBookingToIdleShuttle(passenger, candidateShuttleIdle);
