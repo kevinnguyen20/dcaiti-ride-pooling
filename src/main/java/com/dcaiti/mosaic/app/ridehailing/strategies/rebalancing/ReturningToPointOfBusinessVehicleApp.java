@@ -192,6 +192,12 @@ public class ReturningToPointOfBusinessVehicleApp extends ConfigurableApplicatio
             currentRoute = getNewCurrentRoute(currentStops.peek().getPositionOnRoad().getConnection());
         }
 
+        //
+        if (currentRoute == null) {
+            driveToPointOfBusiness();
+            currentRoute = currentRoutes.peek();
+        }
+
         // Update stop and route information
         getOs().getNavigationModule().switchRoute(currentRoute);
         currentRouteId = getOs().getNavigationModule().getCurrentRoute().getId();
