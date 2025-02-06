@@ -1,7 +1,6 @@
 package com.dcaiti.mosaic.app.ridehailing.heuristics;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -181,6 +180,7 @@ public class RestrictedSubgraphMatchingSimple {
         convertToVehicleStops(result, currentRide, passenger, shuttle);
     }
 
+    @SuppressWarnings("unused")
     private static double getDistanceToIdleShuttle(VehicleStop pickup, GeoPoint shuttlePosition) {
         // Determine the shuttle position on the road
         IRoadPosition shuttlePositionOnRoad = RoutingUtils.getClosestRoadPosition(shuttlePosition);
