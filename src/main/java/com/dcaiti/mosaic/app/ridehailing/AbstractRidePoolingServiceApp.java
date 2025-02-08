@@ -202,7 +202,8 @@ public abstract class AbstractRidePoolingServiceApp<ConfigT>
                     ride.getPickupTime() + ", " +
                     ride.getDropOffTime() + ", " +
                     ride.getPickupLocation().getGeoPoint() + ", " +
-                    ride.getDropoffLocation().getGeoPoint();
+                    ride.getDropoffLocation().getGeoPoint() + ", " +
+                    ride.getAssignedVehicleId();
                 writer.write(rideInfo + System.lineSeparator());
             }
         } catch (IOException e) {
