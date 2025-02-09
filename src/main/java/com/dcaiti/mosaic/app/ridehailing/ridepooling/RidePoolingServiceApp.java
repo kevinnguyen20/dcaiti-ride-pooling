@@ -14,7 +14,7 @@ import com.dcaiti.mosaic.app.ridehailing.utils.server.RideProvider;
 public class RidePoolingServiceApp extends
     AbstractRidePoolingServiceApp<CRidePoolingServiceApp> {
 
-    private final int heuristicMode = 0;
+    private final int heuristicMode = 1;
     public RidePoolingServiceApp() {
         super(CRidePoolingServiceApp.class);
     }
