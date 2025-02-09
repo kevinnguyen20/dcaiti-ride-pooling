@@ -1,7 +1,6 @@
 package com.dcaiti.mosaic.app.ridehailing.heuristics;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -62,9 +61,7 @@ public class RestrictedSubgraphMatchingGreedy {
             vehicleEnroute.forEach(shuttle -> {
                 // Check duplicate locations
                 if (passenger.getStatus() == Ride.Status.REJECTED || 
-                    HeuristicsUtils.checkForDuplicateCoordinates(shuttle, passenger) || 
-                    HeuristicsUtils.hasIdenticalPickupAndDropoff(shuttle, passenger)) {
-
+                    HeuristicsUtils.checkForDuplicateCoordinates(shuttle, passenger)) {
                     passenger.setStatus(Ride.Status.REJECTED);
                     return;
                 }
@@ -112,9 +109,7 @@ public class RestrictedSubgraphMatchingGreedy {
 
             // Assign idle vehicle to passenger
             if (candidateShuttle == null && !vehicleIdle.isEmpty()) {
-                VehicleStatus candidateShuttleIdle = vehicleIdle.stream()
-                    .min(Comparator.comparingDouble(shuttle -> getDistanceToIdleShuttle(pickup, shuttle.getCurrentPosition())))
-                    .orElse(null);
+                VehicleStatus candidateShuttleIdle = vehicleIdle.remove(0);
 
                 if (candidateShuttleIdle != null) {
                     assignBookingToIdleShuttle(passenger, candidateShuttleIdle);
@@ -197,6 +192,7 @@ public class RestrictedSubgraphMatchingGreedy {
         convertToVehicleStops(result, currentRide, passenger, shuttle);
     }
 
+    @SuppressWarnings("unused")
     private static double getDistanceToIdleShuttle(VehicleStop pickup, GeoPoint shuttlePosition) {
         // Determine the shuttle position on the road
         IRoadPosition shuttlePositionOnRoad = RoutingUtils.getClosestRoadPosition(shuttlePosition);
