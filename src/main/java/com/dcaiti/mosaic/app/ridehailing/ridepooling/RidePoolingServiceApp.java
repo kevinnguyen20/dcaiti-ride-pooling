@@ -28,7 +28,7 @@ public class RidePoolingServiceApp extends
     protected void assignBookingsToShuttles(List<Ride> newBookings) {
         switch(heuristicMode) {
             case 0 -> {
-                FleetManagement.setShuttleCapacity(1);
+                FleetManagement.setShuttleCapacity(2);
                 RestrictedSubgraphMatchingSimple.assignBookingsToShuttles(storedRides, registeredShuttles, newBookings, rides, stops, routes);
             }
             case 1 -> {
