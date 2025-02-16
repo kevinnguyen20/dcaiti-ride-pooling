@@ -7,6 +7,7 @@ import com.dcaiti.mosaic.app.ridehailing.RidePoolingProvider;
 import com.dcaiti.mosaic.app.ridehailing.heuristics.InsertionHeuristic;
 import com.dcaiti.mosaic.app.ridehailing.heuristics.RestrictedSubgraphMatchingGreedy;
 import com.dcaiti.mosaic.app.ridehailing.heuristics.RestrictedSubgraphMatchingSimple;
+import com.dcaiti.mosaic.app.ridehailing.heuristics.RideHailingGreedy;
 import com.dcaiti.mosaic.app.ridehailing.strategies.fleet.FleetManagement;
 import com.dcaiti.mosaic.app.ridehailing.utils.server.Ride;
 import com.dcaiti.mosaic.app.ridehailing.utils.server.RideProvider;
@@ -14,7 +15,7 @@ import com.dcaiti.mosaic.app.ridehailing.utils.server.RideProvider;
 public class RidePoolingServiceApp extends
     AbstractRidePoolingServiceApp<CRidePoolingServiceApp> {
 
-    private final int heuristicMode = 1;
+    private final int heuristicMode = 3;
     public RidePoolingServiceApp() {
         super(CRidePoolingServiceApp.class);
     }
@@ -38,6 +39,10 @@ public class RidePoolingServiceApp extends
             case 2 -> {
                 FleetManagement.setShuttleCapacity(4);
                 InsertionHeuristic.assignBookingsToShuttles(storedRides, registeredShuttles, newBookings, rides, stops, routes);
+            }
+            case 3 -> {
+                FleetManagement.setShuttleCapacity(1);
+                RideHailingGreedy.assignBookingsToShuttles(storedRides, registeredShuttles, newBookings, rides, stops, routes);
             }
         }
     }
