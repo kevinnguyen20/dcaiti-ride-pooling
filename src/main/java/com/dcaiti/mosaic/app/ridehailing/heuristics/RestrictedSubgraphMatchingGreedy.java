@@ -121,6 +121,7 @@ public class RestrictedSubgraphMatchingGreedy {
 
                 if (passenger.getAssignedVehicleId() == null) {
                     passenger.setStatus(Ride.Status.DECLINED);
+                    // passenger.incrementNumberOfRejections();
                 }
             }
         });

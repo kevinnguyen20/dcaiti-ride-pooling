@@ -109,6 +109,7 @@ public class RestrictedSubgraphMatchingSimple {
 
                 if (passenger.getAssignedVehicleId() == null) {
                     passenger.setStatus(Ride.Status.DECLINED);
+                    // passenger.incrementNumberOfRejections();
                 }
             }
         });
