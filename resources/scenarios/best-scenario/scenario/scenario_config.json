@@ -2,7 +2,7 @@
     "simulation": {
         "id": "BeST-MOSAIC",
         "duration": "7h",
-        "randomSeed": 268965854,
+        "randomSeed": 488634392,
         "projection": {
             "centerCoordinates": {
                 "latitude": 52.525192,
