@@ -18,7 +18,7 @@ import com.dcaiti.mosaic.app.ridehailing.utils.vehicle.VehicleStop;
 
 public class RideHailingGreedy {
     private static VehicleStatus candidateShuttle = null;
-    private static double shoretstDistance = Double.MAX_VALUE;
+    private static double shortestDistance = Double.MAX_VALUE;
 
     private static Map<String, List<Ride>> allRides;
     private static Map<String, Queue<VehicleStop>> currentStops;
@@ -42,7 +42,7 @@ public class RideHailingGreedy {
 
         newBookings.forEach(booking -> {
             candidateShuttle = null;
-            shoretstDistance = Double.MAX_VALUE;
+            shortestDistance = Double.MAX_VALUE;
 
             VehicleStop pickup = booking.getPickupLocation();
 
@@ -56,8 +56,8 @@ public class RideHailingGreedy {
 
                 double distance = HeuristicsUtils.distance(passengerOrigin, RoutingUtils.centerOf(shuttlePositionOnRoad.getConnection()).toCartesian());
 
-                if (distance < shoretstDistance) {
-                    shoretstDistance = distance;
+                if (distance < shortestDistance) {
+                    shortestDistance = distance;
                     candidateShuttle = shuttle;
                 }
             });
