@@ -1,5 +1,7 @@
 # On-Demand Ride-Pooling with Eclipse MOSAIC
 
+![alt text](../master-thesis-svn/Thesis/03-Methodology/Images/trips-heatmap.png)
+
 The ride-pooling architecture is implemented using the Eclipse MOSAIC Co-Simulation Framework. It integrates and synchronizes with the traffic simulator in Eclipse MOSAIC, which incorporates the BeST scenario. The Eclipse MOSAIC Cell Simulator is a built-in feature that enables entities, such as the dispatcher and shuttles, to communicate via cellular networks. Additionally, the Eclipse MOSAIC Application Simulator enables the implementation of application logic and its mapping to specific simulation units. Three applications were implemented for this work that will be used later in the simulations:
 
 - **RidePoolingServiceApp**: Handles all tasks for which the dispatcher is accountable.  
@@ -7,6 +9,16 @@ The ride-pooling architecture is implemented using the Eclipse MOSAIC Co-Simulat
 - **ReturningToPointOfBusinessVehicleApp**: Manages low-level actions of
   shuttles such as route selection, stopping, and picking up or dropping off
   passengers.
+
+![alt text](../master-thesis-svn/Thesis/04-Implementation/Images/mosaic.png)
+
+## Operation Flow
+
+![alt text](../master-thesis-svn/Thesis/03-Methodology/Images/dispatcher.png)
+
+## Dispatcher and Shuttle
+
+![alt text](../master-thesis-svn/Thesis/04-Implementation/Images/apps.png)
 
 ## Simulation Scenario
 
