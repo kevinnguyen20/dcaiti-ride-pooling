@@ -1,4 +1,5 @@
 # Ride-Pooling with Eclipse MOSAIC
 
 On-demand ride-pooling is emerging as an innovative mobility alternative to existing transportation modes. It offers greater flexibility than public transportation by operating without fixed routes or schedules, provides the convenience of door-to-door service, and is more affordable than owning a private vehicle, taking a taxi, or using ride-hailing services, as it allows users to share rides.
+
 While ride-hailing has gained significant popularity in recent decades, its low occupancy rates and high number of empty miles contribute to increased congestion and emissions. With accelerating global population growth and urbanization, these challenges become more critical. Ride-pooling presents a promising alternative that combines the advantages of both worlds, ultimately helping to reduce traffic congestion and reduce emissions.
